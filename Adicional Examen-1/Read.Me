@@ -1,0 +1,17 @@
+compilar con el comando make y correr con el comando ./bin/carrito.out 
+
+la salida esperada como ejemplo es esta:
+
+ I  ~/Desktop/VSCode/Paralela y Concurrente/Adicional Examen-1  main ?1  make                                          ✔  17:25:48 
+g++ -g -c carrito.cc -o bin/carrito.o
+g++ -g -c tienda.cc -o bin/tienda.o
+g++ -g bin/carrito.o bin/tienda.o -o bin/carrito.out
+ I  ~/Desktop/VSCode/Paralela y Concurrente/Adicional Examen-1  main ?1  ./bin/carrito.out                             ✔  17:25:51 
+Tienda con 6 artículos y capacidad de carrito 10
+Pesos = { 1, 2, 3, 8, 7, 4 }
+Precios = { 20, 5, 10, 40, 15, 25 }
+Tienda con 45 artículos y capacidad de carrito 100
+Pesos = { 16, 8, 7, 13, 3, 6, 10, 7, 16, 12, 11, 1, 11, 15, 16, 15, 5, 6, 4, 1, 9, 6, 4, 6, 9, 13, 8, 8, 14, 5, 3, 11, 10, 2, 2, 2, 7, 11, 2, 14, 16, 13, 6, 9, 11 }
+Precios = { 17, 17, 23, 15, 16, 10, 24, 13, 23, 19, 17, 15, 11, 13, 22, 24, 16, 20, 11, 15, 15, 11, 21, 13, 10, 12, 22, 11, 16, 22, 13, 16, 25, 22, 11, 19, 16, 20, 25, 20, 19, 16, 14, 12, 22 }
+La ganancia total es de: [ 60 ], usando [ 9 ] kilos de capacidad
+Serial version wall time 0.012 
