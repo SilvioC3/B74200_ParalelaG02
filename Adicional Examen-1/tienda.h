@@ -11,6 +11,7 @@
  *
 **/
 #include <iostream>
+#include <pthread.h>
 
 class Tienda {
    public:
@@ -19,6 +20,7 @@ class Tienda {
       ~Tienda();
       std::string toString();
       void llenarCarrito();	// Maximize cart cost without exceed capacity (to be completed by students)
+      void llenarCarritoPthreads( int family ); // same as above, recieves an int number of threads( represented by a family )
 
    private:
       int articulos;		// store items

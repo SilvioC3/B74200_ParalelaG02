@@ -45,13 +45,16 @@ double getTimer( struct timeval timerStart ) {
 
 
 
-int main() {
+int main( int argc, char ** argv) {
+
+   long hilos;
+
    int items = 6;
    int capacidadCarrito = K;
    int v[] = { 20, 5, 10, 40, 15, 25 };
    int w[] = { 1,  2,  3,  8,  7,  4 };
    Tienda * t = new Tienda( capacidadCarrito, items, w, v );
-   Tienda * t1 = new Tienda( 45, 100 );
+   Tienda * t1 = new Tienda( 1000, 400 );
 
     clock_t start, finish;
     struct timeval timerStart;
@@ -60,15 +63,56 @@ int main() {
    std::cout << t->toString();
    std::cout << t1->toString();
 
+   hilos = 4;
+   if ( argc > 1 ) {
+      hilos = atol( argv[ 1 ] );
+   }
 
-    startTimer( & timerStart );
-    start = clock();
-    total = 0;
+   printf("\nPruebas de bajo volumen ( PALI )\n");
+
+   startTimer( & timerStart );
+   start = clock();
+   total = 0;
    t->llenarCarrito();		// Encuentra la mayor compra sin sobrepasar el límite de peso
-    finish = clock();
-    used = ((double) (finish - start)) / CLOCKS_PER_SEC;
-    wused = getTimer( timerStart );
-    printf( "\nSerial version wall time %g \n", wused );
+   finish = clock();
+   used = ((double) (finish - start)) / CLOCKS_PER_SEC;
+   wused = getTimer( timerStart );
+   printf( "Serial version wall time %g \n", wused );
+
+
+   startTimer( & timerStart );
+   start = clock();
+   total = 0;
+   t->llenarCarritoPthreads( hilos );		// Una familia encuentra la mayor compra sin sobrepasar el límite de peso
+   finish = clock();
+   used = ((double) (finish - start)) / CLOCKS_PER_SEC;
+   wused = getTimer( timerStart );
+   printf( "Pthread version con [ %ld ] hilos tiene un wall time de: %g \n", hilos, wused );
+
+
+   printf("\nPruebas de alto volumen ( PRICEMART )\n");
+
+   // cambie a 1000 articulos para hacer pruebas
+
+   startTimer( & timerStart );
+   start = clock();
+   total = 0;
+   t1->llenarCarrito();		// Encuentra la mayor compra sin sobrepasar el límite de peso
+   finish = clock();
+   used = ((double) (finish - start)) / CLOCKS_PER_SEC;
+   wused = getTimer( timerStart );
+   printf( "Serial version wall time %g \n", wused );
+
+
+   startTimer( & timerStart );
+   start = clock();
+   total = 0;
+   t1->llenarCarritoPthreads( hilos );		// Una familia encuentra la mayor compra sin sobrepasar el límite de peso
+   finish = clock();
+   used = ((double) (finish - start)) / CLOCKS_PER_SEC;
+   wused = getTimer( timerStart );
+   printf( "Pthread version con [ %ld ] hilos tiene un wall time de: %g \n", hilos, wused );
+
 
    return 0;
 
