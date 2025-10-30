@@ -34,8 +34,11 @@ class HiloLector {
 
         string getFilePath();
 
+        // version de prueba
         // crea hilos contadores y junta resultados
-        void counters();
+        // void counters();
+
+        map< string, int > counters();
 
         // para que los contadores actualizen resultados
         void updateTagCounts( const map< string, int > &localCounts);

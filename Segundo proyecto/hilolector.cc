@@ -50,7 +50,28 @@ void* executeCounters( void* arg ) {
     pthread_exit( NULL );
 }
 
-void HiloLector::counters() {
+// version de prueba para imprimir por lector
+// void HiloLector::counters() {
+
+//     counterThreads.resize( numThreads );
+//     vector< CounterArgs > args( numThreads );
+
+//     // inicio los contadores que me pide le usuario
+//     for( int i = 0; i < numThreads; i++ ) {
+//         args[ i ] = { this, i };
+//         pthread_create( &counterThreads[ i ], NULL, executeCounters, &args[ i ]);
+//     }
+
+//     // espero que terminen
+//     for( auto& counter : counterThreads ) {
+//         pthread_join( counter, NULL );
+//     }
+
+//     // imprimir resultados
+//     printTagCount();
+// }
+
+map< string, int > HiloLector::counters() {
 
     counterThreads.resize( numThreads );
     vector< CounterArgs > args( numThreads );
@@ -66,8 +87,7 @@ void HiloLector::counters() {
         pthread_join( counter, NULL );
     }
 
-    // imprimir resultados
-    printTagCount();
+    return tagCounts;
 }
 
 void HiloLector::updateTagCounts( const map< string, int > &localCounts ) {
@@ -86,11 +106,11 @@ void HiloLector::updateTagCounts( const map< string, int > &localCounts ) {
 
 void HiloLector::printTagCount() {
 
-    std::cout << "Resultados de: " << filePath << ":\n";
+    std::cout << "\nCount for: " << filePath << ":\n";
 
     for(const auto& tag : tagCounts) {
-        std::cout << tag.first << " : " << tag.second << "\n";
+        std::cout << tag.first << " : " << tag.second << endl;
     }
 
-    std::cout << "-----------------------------\n";
+    cout << endl;
 }

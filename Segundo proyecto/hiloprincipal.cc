@@ -20,6 +20,17 @@ struct LectorArgs
     int strategy;
 };
 
+void startTimer( struct timeval * timerStart ) {
+    gettimeofday( timerStart, NULL );
+}
+
+double getTimer( struct timeval timerStart ) {
+    struct timeval timerStop, timerElapsed;
+    gettimeofday( &timerStop, NULL );
+    timersub( &timerStop, &timerStart, &timerElapsed );
+    return timerElapsed.tv_sec * 1000.0 + timerElapsed.tv_usec / 1000.0;
+}
+
 void* executeLectors( void* arg ) {
 
     // convierto el puntero void generico para sacar datos de mi struct
@@ -37,10 +48,15 @@ void* executeLectors( void* arg ) {
     // objeto lector con sus respectivos parametros
     HiloLector lector( args->filePath, args->numThreads, args->strategy );
 
+    // para la version de prueba donde cada lector imprime sus resultados
     // llamo al metodo counters para contar las etiquetas en cada archivo HTML
-    lector.counters();
+    // lector.counters();
+    // pthread_exit( NULL );
 
-    pthread_exit( NULL );
+    // acumulo en un map los conteos de mis lectores
+    map< string, int >* tagResult = new map< string, int > ( lector.counters() );
+
+    pthread_exit( ( void* ) tagResult );
 }
 
 int main( int argc, char* argv[] ) {
@@ -54,6 +70,9 @@ int main( int argc, char* argv[] ) {
     vector< string > files;
     int workerCount = 1; // contadores pedidos por el usuario 1 por defecto
     vector < int > strategies;
+
+    // mapa para almacenar los resultados del conteo global
+    map< string, int > globalTagCount;
 
     // para argumentos de entrada de la forma: contar -t=10 a.html b.html c.html -e=2,3,4
     for( int i = 1; i < argc; i++ ) {
@@ -97,6 +116,14 @@ int main( int argc, char* argv[] ) {
     vector< pthread_t > lectorThreads( files.size() );
     vector< LectorArgs > lectorArgs( files.size() );
 
+    // para medir le tiempo
+    clock_t start, finish;
+    struct timeval timerStart;
+    double used, wused;
+
+    startTimer( &timerStart );
+    start = clock();
+
     // arranco los hilos
     for( size_t i = 0; i < files.size(); i++ ) {
 
@@ -115,11 +142,46 @@ int main( int argc, char* argv[] ) {
         pthread_create( &lectorThreads[ i ], NULL, executeLectors, &lectorArgs[ i ] );
     }
 
+    // para pruebas anteriores
     // espero a que los hilos terminen
-    for( auto& lector : lectorThreads ) {
+    // for( auto& lector : lectorThreads ) {
 
-        pthread_join( lector, NULL );
+    //     pthread_join( lector, NULL );
+    // }
+
+    // acumulo los tags cuando los hilos lectores termian su ejecucion
+    for( size_t i = 0; i < lectorThreads.size(); i++ ) {
+
+        void* tagReturn;
+
+        pthread_join( lectorThreads[ i ], &tagReturn );
+
+        map< string, int >* tagPackage = static_cast< map< string, int >* >( tagReturn );
+
+        // acumulo los tags que me retonaron en el acumulador global
+        for( const auto& tag : *tagPackage ) {
+            
+            globalTagCount[ tag.first ] += tag.second;
+        }
+
+        // libero la mameria dinamica
+        delete tagPackage;
     }
+
+    finish = clock();
+    used = ( ( double ) ( finish - start ) ) / CLOCKS_PER_SEC; // tiempo del CPU del hilo principal
+    wused = getTimer( timerStart ); // tiempo de pared
+
+    // imprimo los resultados una vez termino
+    printf( "\nGlobal tag count:\n" );
+
+    for( const auto& tag : globalTagCount ) {
+        // printf( "IM IN");
+        cout << tag.first << " : " << tag.second << endl;
+    }
+
+    printf( "\nWall time: %.3f ms\n", wused );
+    printf( "Main thread CPU time: %.3f s\n", used);
 
     return 0;
 }
