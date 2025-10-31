@@ -6,9 +6,10 @@
 #include <sstream>
 #include <cctype>
 #include <regex>
+#include <algorithm>
 
 #include "FileReader.h"
 
 using namespace std;
 
-void countTags( FileReader* reader, int id, map< string, int > &localCounts );
+void countTagsBuffer( const string &buffer, map< string, int > &localCounts, string &carryOver );

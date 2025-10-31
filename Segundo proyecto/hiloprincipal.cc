@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <fstream>
 
 #include "hilolector.h"
 
@@ -36,22 +37,8 @@ void* executeLectors( void* arg ) {
     // convierto el puntero void generico para sacar datos de mi struct
     LectorArgs* args = ( LectorArgs* ) arg;
 
-    // print para verificar lectores
-    // static int lectorID = 0; // contador de lectores
-    // int myID;
-    // pthread_mutex_t printMutex = PTHREAD_MUTEX_INITIALIZER; // para que no se mezclen prints
-    // pthread_mutex_lock( &printMutex );
-    // myID = ++lectorID;
-    // pthread_mutex_unlock( &printMutex );
-    // printf( "Soy el lector %d ( archivo: %s )\n", myID, args->filePath.c_str() );
-
     // objeto lector con sus respectivos parametros
     HiloLector lector( args->filePath, args->numThreads, args->strategy );
-
-    // para la version de prueba donde cada lector imprime sus resultados
-    // llamo al metodo counters para contar las etiquetas en cada archivo HTML
-    // lector.counters();
-    // pthread_exit( NULL );
 
     // acumulo en un map los conteos de mis lectores
     map< string, int >* tagResult = new map< string, int > ( lector.counters() );
@@ -74,6 +61,9 @@ int main( int argc, char* argv[] ) {
     // mapa para almacenar los resultados del conteo global
     map< string, int > globalTagCount;
 
+    // contador de archivos validos
+    int validFiles = 0;
+
     // para argumentos de entrada de la forma: contar -t=10 a.html b.html c.html -e=2,3,4
     for( int i = 1; i < argc; i++ ) {
 
@@ -83,6 +73,14 @@ int main( int argc, char* argv[] ) {
         if( arg.rfind( "-t=", 0 ) == 0 ) {
 
             workerCount = stoi( arg.substr( 3 ) ); // extrae el 4to caracter o sea el numero y lo asigna a workerCount
+
+            // manejo de valores nevativos para los trabajadores, si hay mas de 1 archivo no es tecnicamente serial pero meh... close enough.
+            if( workerCount <= 0 ) {
+
+                fprintf( stderr, "\nERROR: Invalid worker count '%d'. Parameter must be positive. Defaulting to serial ver.\n", workerCount );
+
+                workerCount = 1;
+            }
 
         // lo mismo pero con -e=
         } else if( arg.rfind( "-e=", 0 ) == 0 ) {
@@ -110,7 +108,7 @@ int main( int argc, char* argv[] ) {
     }
 
     // imprimo lo que tengo hasta ahora
-    cout << "Sorting...\n" << "Files: " << files.size() << "\nUsing: " << workerCount << " counters per file" << endl;
+    cout << "\nSorting...\n" << "Files: " << files.size() << "\nUsing: " << workerCount << " counters per file" << endl;
 
     // para procesarlos asigno un hilo por archivo
     vector< pthread_t > lectorThreads( files.size() );
@@ -127,30 +125,45 @@ int main( int argc, char* argv[] ) {
     // arranco los hilos
     for( size_t i = 0; i < files.size(); i++ ) {
 
-        int strategy = 1;
+        // comprobar si el archivo existe y que no este corrupto
+        ifstream testFile( files[ i ] );
+
+        if( !testFile.good() ) {
+
+            fprintf( stderr, "\nERROR: '%s' doesnt exist or cannot be opened and will be omited\n", files[ i ].c_str() );
+            continue;
+        }
+
+        testFile.close();
+
+        // manejor de errores con la estrategia
+        int strategy = 3;
 
         // si una estrategia no fue asignada se queda con la 1
         if( i < strategies.size()) {
 
             strategy = strategies[ i ];
+
+            // validacion final de estrategia
+            if( strategy < 1 || strategy > 4 ) {
+
+                fprintf( stderr, "\nERROR: Invalid strategy '%d' for file '%s' defaulting to strategy 1\n", strategy, files[ i ].c_str() );
+
+                strategy = 1;
+            }
+
         } else {
-            printf("WARNING: cannot find strategy for '%s'. Assigning default strategy 1...\n", files[ i ].c_str());
+            fprintf( stderr, "\nWARNING: Cannot find strategy for '%s'. Assigning default strategy 1...\n", files[ i ].c_str());
 
         }
 
-        lectorArgs[ i ] = { files[ i ], workerCount, strategy };
-        pthread_create( &lectorThreads[ i ], NULL, executeLectors, &lectorArgs[ i ] );
+        lectorArgs[ validFiles ] = { files[ i ], workerCount, strategy };
+        pthread_create( &lectorThreads[ validFiles ], NULL, executeLectors, &lectorArgs[ validFiles ] );
+        validFiles++;
     }
 
-    // para pruebas anteriores
-    // espero a que los hilos terminen
-    // for( auto& lector : lectorThreads ) {
-
-    //     pthread_join( lector, NULL );
-    // }
-
     // acumulo los tags cuando los hilos lectores termian su ejecucion
-    for( size_t i = 0; i < lectorThreads.size(); i++ ) {
+    for( int i = 0; i < validFiles; i++ ) {
 
         void* tagReturn;
 

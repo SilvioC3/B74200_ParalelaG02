@@ -16,10 +16,23 @@ class FileReader {
         bool eof; // end of file: fin del archivo
         int numThreads;
         int strategy;
+        int totalLines;
+        int currentLine;
+
+        vector<streampos> linePositions;
 
     public:
         FileReader( string file, int counters, int strat );
         ~FileReader();
 
         bool getNextLine( string &line );
+
+        void preprocessFile();
+
+        int getTotalLines();
+        
+        bool getLineAt( int lineIndex, string &line );
+
+        // para dianamicas
+        int getNextDynamicLine();
 };

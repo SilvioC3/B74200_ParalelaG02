@@ -1,28 +1,31 @@
 #include "hilocontador.h"
 
-void countTags( FileReader* reader, int id, std::map<std::string, int> &localCounts ) {
+// 🔹 Procesa un buffer parcial o completo ≤512 bytes
+void countTagsBuffer( const string &buffer, map< string, int > &localCounts, string &carryOver ) {
 
-    string line;
+    smatch matches;
+    regex tagPattern( R"(<\s*/?\s*([a-zA-Z0-9]+)[^>]*>)" );
 
-    regex tagPattern( R"(<\s*/?\s*([a-zA-Z0-9]+)[^>]*>)" ); 
+    //  acumular el fragmento de etiqueta cortada con el buffer
+    string text = carryOver + buffer;
+    carryOver.clear();
 
-    while( reader->getNextLine( line ) ) {
+    string::const_iterator searchStart( text.cbegin() );
 
-        smatch matches;
-        string::const_iterator searchStart( line.cbegin() );
+    while( regex_search( searchStart, text.cend(), matches, tagPattern ) ) {
 
-        // busca todas las coincidencias de etiquetas en la linea
-        while ( regex_search( searchStart, line.cend(), matches, tagPattern ) ) {
-            
-            string tag = matches[ 1 ]; // el 1 es el nombre de la etiqueta
+        string tag = matches[ 1 ];
+        transform( tag.begin(), tag.end(), tag.begin(), ::tolower ); // todo a lowercase por si las dudas
+        localCounts[ tag ]++;
+        searchStart = matches.suffix().first;
+    }
 
-            // todo en lowercase
-            transform( tag.begin(), tag.end(), tag.begin(), ::tolower );
+    // verifica si existe una etiqueta cortada al final de mi bloque
+    size_t lastOpen = text.rfind( '<' );
+    size_t lastClose = text.rfind( '>' );
 
-            // contador local
-            localCounts[ tag ]++;
-            
-            searchStart = matches.suffix().first;
-        }
+    if( lastOpen != string::npos && ( lastClose == string::npos || lastOpen > lastClose ) ) {
+        // agrego el sobrante al carryOver
+        carryOver = text.substr( lastOpen );
     }
 }
