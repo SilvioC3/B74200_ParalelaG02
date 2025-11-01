@@ -1,12 +1,12 @@
 #include "hilocontador.h"
 
-// 🔹 Procesa un buffer parcial o completo ≤512 bytes
+// Procesa un buffer parcial o completo ≤512 bytes
 void countTagsBuffer( const string &buffer, map< string, int > &localCounts, string &carryOver ) {
 
     smatch matches;
     regex tagPattern( R"(<\s*/?\s*([a-zA-Z0-9]+)[^>]*>)" );
 
-    //  acumular el fragmento de etiqueta cortada con el buffer
+    // acumular el fragmento de etiqueta cortada con el buffer
     string text = carryOver + buffer;
     carryOver.clear();
 
@@ -16,7 +16,16 @@ void countTagsBuffer( const string &buffer, map< string, int > &localCounts, str
 
         string tag = matches[ 1 ];
         transform( tag.begin(), tag.end(), tag.begin(), ::tolower ); // todo a lowercase por si las dudas
-        localCounts[ tag ]++;
+
+        // verifico que solo agrego etiquetas validas al conteo
+        if( isValidHtmlTag( tag ) ) {
+
+            localCounts[tag]++;
+        } else {
+
+            // aqui podria avisar cada vez que encuentro etiquetas no validas
+        }
+        
         searchStart = matches.suffix().first;
     }
 
@@ -28,4 +37,10 @@ void countTagsBuffer( const string &buffer, map< string, int > &localCounts, str
         // agrego el sobrante al carryOver
         carryOver = text.substr( lastOpen );
     }
+}
+
+// funcion para verificar si las etiquetas son validas
+bool isValidHtmlTag( const string &tag ) {
+
+    return validHtmlTags.find( tag ) != validHtmlTags.end();
 }

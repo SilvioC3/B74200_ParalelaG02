@@ -119,6 +119,64 @@ int main( int argc, char* argv[] ) {
     struct timeval timerStart;
     double used, wused;
 
+    // fase de medicion serial
+    startTimer( &timerStart );
+    start = clock();
+
+    for( size_t i = 0; i < files.size(); i++ ) {
+
+        ifstream testFile( files[ i ] );
+
+        if( !testFile.good() ) {
+
+            fprintf( stderr, "\nERROR: '%s' no existe o no se puede abrir. Se omitirá.\n", files[ i ].c_str() );
+            continue;
+        }
+
+        testFile.close();
+
+        // manejor de errores con la estrategia
+        int strategy = 3;
+
+        // si una estrategia no fue asignada se queda con la 1
+        if( i < strategies.size()) {
+
+            strategy = strategies[ i ];
+
+            // validacion final de estrategia
+            if( strategy < 1 || strategy > 4 ) {
+
+                fprintf( stderr, "\nERROR: Invalid strategy '%d' for file '%s' defaulting to strategy 1\n", strategy, files[ i ].c_str() );
+
+                strategy = 1;
+            }
+
+        } else {
+            fprintf( stderr, "\nWARNING: Cannot find strategy for '%s'. Assigning default strategy 1...\n", files[ i ].c_str());
+
+        }
+
+        // se ejecuta cada archivo en serie con 1 solo hilo ( modo serial ) y su respectiva estrategia
+        HiloLector lector( files[ i ], 1, strategy );
+        map< string, int > localTags = lector.counters();
+
+        // acumula resultados seriales
+        for( const auto& tag : localTags ) {
+
+            globalTagCount[ tag.first ] += tag.second;
+        }
+    }
+
+    finish = clock();
+    used = ( ( double ) ( finish - start ) ) / CLOCKS_PER_SEC;
+    wused = getTimer( timerStart );
+    double serialWallTime = wused;
+    double serialCPUTime = used;
+
+    // limpio resultados seriales
+    globalTagCount.clear();
+
+    // fase  medicion paralela
     startTimer( &timerStart );
     start = clock();
 
@@ -184,6 +242,8 @@ int main( int argc, char* argv[] ) {
     finish = clock();
     used = ( ( double ) ( finish - start ) ) / CLOCKS_PER_SEC; // tiempo del CPU del hilo principal
     wused = getTimer( timerStart ); // tiempo de pared
+    double parallelWallTime = wused;
+    double parallelCPUTime = used;
 
     // imprimo los resultados una vez termino
     printf( "\nGlobal tag count:\n" );
@@ -193,8 +253,14 @@ int main( int argc, char* argv[] ) {
         cout << tag.first << " : " << tag.second << endl;
     }
 
-    printf( "\nWall time: %.3f ms\n", wused );
-    printf( "Main thread CPU time: %.3f s\n", used);
+    printf( "\nWall time (serial): %.3f ms\n", serialWallTime );
+    printf( "Main CPU time (serial): %.3f s\n", serialCPUTime );
+
+    printf( "\nWall time (parallel): %.3f ms\n", parallelWallTime );
+    printf( "Main CPU time (parallel): %.3f s\n", parallelCPUTime );
+
+    double speedup = serialWallTime / parallelWallTime;
+    printf( "\nSpeedUp: x%.3f\n", speedup );
 
     return 0;
 }

@@ -15,7 +15,7 @@ using namespace std;
 
 // estructura para unidades de trabajo = bloques
 struct Task {
-    string data;    // fragmento de 512 bytes
+    string data; // fragmento de 512 bytes
     int blockID;
     int assignedTo;
     int startLine;
@@ -24,7 +24,7 @@ struct Task {
 
 // cola compartida para repartir las tareas entre los contadores
 struct TaskQueue {
-    queue<Task> tasks;  // tareas pndientes
+    queue<Task> tasks; // tareas pndientes
     pthread_mutex_t mutex;
     pthread_cond_t not_empty;
     pthread_cond_t not_full;
@@ -47,7 +47,7 @@ class HiloLector {
         // acumulador de etiquetas
         map< string, int > tagCounts;
 
-        const size_t MAX_BUFFER = 512;  // tama;o maximo de bloque por task
+        const size_t MAX_BUFFER = 512; // tama;o maximo de bloque por task
         
         TaskQueue taskQueue;
 
