@@ -27,9 +27,7 @@ struct TaskQueue {
     queue<Task> tasks; // tareas pndientes
     pthread_mutex_t mutex;
     pthread_cond_t not_empty;
-    pthread_cond_t not_full;
     bool done = false;
-    int capacity = 10;
 };
 
 class HiloLector {

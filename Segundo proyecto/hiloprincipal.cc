@@ -62,7 +62,7 @@ int main( int argc, char* argv[] ) {
     map< string, int > globalTagCount;
 
     // contador de archivos validos
-    int validFiles = 0;
+    size_t validFiles = 0;
 
     // para argumentos de entrada de la forma: contar -t=10 a.html b.html c.html -e=2,3,4
     for( int i = 1; i < argc; i++ ) {

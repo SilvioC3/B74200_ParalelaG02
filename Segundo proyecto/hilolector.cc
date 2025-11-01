@@ -15,10 +15,8 @@ HiloLector::HiloLector( string file, int counters, int strat) : filePath( file )
     // para sincronizar la cola
     pthread_mutex_init( &taskQueue.mutex, NULL );
     pthread_cond_init( &taskQueue.not_empty, NULL );
-    pthread_cond_init( &taskQueue.not_full, NULL );
 
     taskQueue.done = false;
-    taskQueue.capacity = 10;
 }
 
 HiloLector::~HiloLector() {
@@ -28,7 +26,6 @@ HiloLector::~HiloLector() {
     pthread_mutex_destroy( &mutex );
     pthread_mutex_destroy( &taskQueue.mutex );
     pthread_cond_destroy( &taskQueue.not_empty );
-    pthread_cond_destroy( &taskQueue.not_full );
 }
 
 FileReader* HiloLector::getReader() {
@@ -108,7 +105,8 @@ void* executeCounters( void* arg ) {
         }
 
         queue->tasks.pop();
-        pthread_cond_signal( &queue->not_full );
+
+        // pthread_cond_signal( &queue->not_full );
         pthread_mutex_unlock( &queue->mutex );
 
         // proceso el carryOver interno para etiquetas cortadas
@@ -181,15 +179,9 @@ map< string, int > HiloLector::counters() {
                 offset += chunkSize;
 
                 pthread_mutex_lock( &taskQueue.mutex );
-
-                while( ( int )taskQueue.tasks.size() >= taskQueue.capacity ) {
-
-                     pthread_cond_wait(&taskQueue.not_full, &taskQueue.mutex);
-                }
-
-                taskQueue.tasks.push(task);
-                pthread_cond_signal(&taskQueue.not_empty);
-                pthread_mutex_unlock(&taskQueue.mutex);
+                taskQueue.tasks.push( task );
+                pthread_cond_signal( &taskQueue.not_empty );
+                pthread_mutex_unlock( &taskQueue.mutex );
             }
         }
     } else { 
@@ -226,12 +218,6 @@ map< string, int > HiloLector::counters() {
                 offset += chunkSize;
 
                 pthread_mutex_lock( &taskQueue.mutex );
-
-                while( ( int )taskQueue.tasks.size() >= taskQueue.capacity ) {
-
-                    pthread_cond_wait(&taskQueue.not_full, &taskQueue.mutex);
-                }
-                
                 taskQueue.tasks.push( task );
                 pthread_cond_signal( &taskQueue.not_empty );
                 pthread_mutex_unlock( &taskQueue.mutex );
@@ -252,7 +238,6 @@ map< string, int > HiloLector::counters() {
 
     return tagCounts;
 }
-
 
 void HiloLector::updateTagCounts( const map< string, int > &localCounts ) {
 
