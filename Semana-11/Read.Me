@@ -1,0 +1,26 @@
+[Ejercicio propuesto: 2025/Oct/24; entrega 2025/Nov/07]
+
+1) Crear la clase "Lock" para representar los candados, de la misma manera que hemos hecho en PThreads y con los llamados de Unix, pero esta vez con recursos de OpenMP
+   a) Puede utilizar los llamados para "Locks" de OpenMP:
+      omp_init_lock,
+      omp_set_lock,
+      omp_unset_lock
+      omp_destroy_lock,
+      etc.
+
+2) Crear la clase semáforo para representar un semáforo contador, pero esta vez con recursos de OpenMP
+   a) Puede utilizar locks para construirlos, como se muestra en el ejemplo
+
+3) Adaptar el ejercicio de la papa a OpenMP
+
+4) Implante las variables de condición utilizando recursos de OpenMP y los elementos que hemos construido en este trabajo
+
+5) Resuelva el problema de los filósofos con los recursos de OpenMP
+   a) Recursos
+      Lock
+      Condition
+      Mesa
+      filosofos.cc
+
+   b) Puede correr "make" para construir el ejecutable "filo.out"
+   
