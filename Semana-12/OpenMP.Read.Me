@@ -1,0 +1,21 @@
+[Ejercicio propuesto: 2025/Oct/31; entrega 2025/Nov/07]
+
+0) Este ejercicio queda opcional de momento, en las siguientes clases trabajaremos en este tipo de ejemplos
+
+1) Adaptar el ejemplo de "sumaUno" a OpenMP
+   a) Imprima el tiempo de pared transcurrido utilizando las funciones de OpenMP
+      i) omp_get_wtime
+   b) Utilizando la estrategia del ejemplo omp_sin_sum.c despliegue la asignación de las iteraciones a los hilos, si se define la variable DEBUG
+      i) Revisar las instrucciones "#ifdef DEBUG"
+
+2) Adaptar el ejemplo de "PiPorSeriesPT.cc" (con PThreads) a OpenMP
+
+3) Adaptar el código de la multiplicación de matrices de PThreads a OpenMP
+   a) Archivo original: pth_mat_vect_rand_split.c 
+   b) Despliegue el tiempo de pared transcurrido
+   c) Despliegue la asignación de iteraciones a los hilos
+      i) Utilice "schedule( runtime )" en la indicación de los hilos
+      ii) Cambie la variable de ambiente OMP_SCHEDULE y vuelva a correr el programa
+      iii) Escriba los resultados obtenidos
+
+4) Revisar la guía de referencia de sintáxis en los archivos "OpenMP-*.pdf" que se encuentra en los materiales del curso

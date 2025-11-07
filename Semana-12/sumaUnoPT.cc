@@ -2,10 +2,12 @@
  *  Suma uno a un total mil veces por cada proceso generado
  *  Recibe como parametro la cantidad de procesos que se quiere arrancar
  *  Author: Programacion Concurrente (Francisco Arroyo)
- *  Version: 2020/Set/11
+ *  Version: 2025/Oct/24
  *
  *  Compilar con:
  *   g++ -g sumaUnoPT.c -lpthread
+ *
+ *  Utiliza vectores para crear las estructuras de los hilos
 **/
 
 #include <stdlib.h>
@@ -13,17 +15,20 @@
 #include <unistd.h>
 #include <time.h>
 #include <pthread.h>
+#include <thread>
+#include <vector>
+#include <mutex>
 #include <sys/time.h>
 
 // Shared variables
 long total;
-pthread_mutex_t * mutex;
+std::mutex mutex;
 
 
 /*
  *  Do some work, by now add one to a variable
  */
-void * AddOneWithMutex( void * param ) {
+int AddOneWithMutex( long hilo ) {
    int i;
    long myTotal = 0;
 
@@ -32,9 +37,9 @@ void * AddOneWithMutex( void * param ) {
       usleep( 1 );
    }
 
-   pthread_mutex_lock( mutex );
+   mutex.lock();
    total += myTotal;
-   pthread_mutex_unlock( mutex );
+   mutex.unlock();
 
    pthread_exit( 0 );
 
@@ -44,7 +49,7 @@ void * AddOneWithMutex( void * param ) {
 /*
  *  Do some work, by now add one to a variable
  */
-void * AddOne( void * param ) {
+int AddOne( long hilo ) {
    int i;
 
    for ( i = 0; i < 1000; i++ ) {
@@ -82,23 +87,16 @@ long SerialTest( long hilos ) {
 */
 long ForkTestNoRaceCondition( long hilos ) {
    long hilo;
-   pthread_t * pthilos;
-
-   mutex = (pthread_mutex_t *) calloc( 1, sizeof( pthread_mutex_t ) );
-   pthread_mutex_init( mutex, NULL );
-   pthilos = (pthread_t *) calloc( hilos, sizeof( pthread_t ) );
+   std::vector< std::thread * > trabajadores;
 
    for ( hilo = 0; hilo < hilos; hilo++ ) {
-      pthread_create( & pthilos[ hilo ], NULL, AddOneWithMutex, (void *) hilo );
+      std::thread * nuevo  = new std::thread( AddOneWithMutex, hilo);
+      trabajadores.push_back( nuevo );
    }
 
-   for ( hilo = 0; hilo < hilos; hilo++ ) {
-      pthread_join( pthilos[ hilo ], NULL );
+   for ( auto h: trabajadores ) {
+      h->join();
    }
-
-   free( pthilos );
-   pthread_mutex_destroy( mutex );
-   free( mutex );
 
    return total;
 
@@ -109,18 +107,17 @@ long ForkTestNoRaceCondition( long hilos ) {
 */
 long ForkTestRaceCondition( long hilos ) {
    long hilo;
-   pthread_t * pthilos;
+   std::vector<std::thread*> trabajadores;
 
-   pthilos = (pthread_t *) calloc( hilos, sizeof( pthread_t ) );
-   for ( hilo = 0; hilo < hilos; hilo++ ) {
-      pthread_create( & pthilos[ hilo ], NULL, AddOne, (void *) hilo );
-   }
 
    for ( hilo = 0; hilo < hilos; hilo++ ) {
-      pthread_join( pthilos[ hilo ], NULL );
+      std::thread * nuevo  = new std::thread( AddOne, hilo);
+      trabajadores.push_back( nuevo );
    }
 
-   free( pthilos );
+   for ( auto h: trabajadores ) {
+      h->join();
+   }
 
    return total;
 

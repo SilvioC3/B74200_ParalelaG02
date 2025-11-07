@@ -1,0 +1,166 @@
+[Ejercicio propuesto: 2025/OCt/31; entrega 2025/Nov/0
+
+1) Ejemplos de C++
+   Revisar y correr algunos ejemplos de los recursos disponibles de la biblioteca estandar de C++ (std::)
+   Correr el ejemplo "AtomicInt.cc"
+
+2) Listado de recursos de sincronización de C++ definidos en el estandar, su disponibilidad depende de la implantación del compilador
+
+ Exclusión mutua
+   (Mutual exclusion algorithms prevent multiple threads from simultaneously accessing shared resources. This prevents data races and provides support for synchronization between threads)
+
+   Herramientas disponibles
+      Definidos en <mutex>
+         mutex (C++11 = disponible en esta versión y siguientes)
+            lock
+            try_lock
+            unlock
+
+         timed_mutex (C++11)
+            lock
+            try_lock
+            try_lock_for
+            try_lock_until
+            unlock
+
+         recursive_mutex (C++11)
+            lock
+            try_lock
+            unlock
+
+         recursive_timed_mutex (C++11)
+            lock
+            try_lock
+            try_lock_for
+            try_lock_until
+            unlock
+
+
+      Definidos en <shared_mutex>
+         shared_mutex (C++17)
+            Exclusive locking
+               lock
+               try_lock
+               unlock
+            Shared locking
+               lock_shared
+               try_lock_shared
+               unlock_shared
+
+         shared_timed_mutex (C++14)
+            Exclusive locking
+               lock
+               try_lock
+               try_lock_for
+               try_lock_until
+               unlock
+
+            Shared locking
+               lock_shared
+               try_lock_shared
+               try_lock_shared_for
+               try_lock_shared_until
+               unlock_shared
+
+
+      Manipulación genérica de mutex
+         lock_guard (C++11)
+            Mutex wrapper for RAII mechanism for owning a mutex for the duration of scoped block
+         scoped_lock (C++17)
+         unique_lock (C++11)
+         shared_lock (C++14)
+         defer_lock_t (C++11) etiqueta para indicar la estrategia de bloqueo
+         try_to_lock_t (C++11) "
+         adopt_lock_t (C++11)  "
+
+      Algoritmos de bloqueo
+         lock (C++11)
+         try_lock (C++11)
+
+      Llamados de una sola vez
+         once_flag (C++11)
+         call_once (C++11)
+
+
+   Variable de condición
+      Definidos en <condition_variable>
+         condition_variable (C++11)
+            Notification
+               notify_one
+               notify_all
+
+            Waiting
+               wait
+               wait_for
+               wait_until
+
+         condition_variable_any (C++11)
+            Notification
+               notify_one
+               notify_all
+
+            Waiting
+               wait
+               wait_for
+               wait_until
+
+         notify_all_at_thread_exit (C++11)
+         cv_status (C++11)
+
+
+   Semáforos
+      Definidos en <semaphore>
+         counting_semaphore, binary_semaphore (C++20)
+            release
+            acquire
+            try_acquire
+            try_acquire_for
+            try_acquire_until
+
+
+   Picaportes (Latch) y barreras
+      Definidos en <latch>
+         latch (C++20)
+            count_down
+            try_wait
+            wait
+            arrive_and_wait
+
+
+      Definidos en <barrier>
+         barrier (C++20)
+            arrive
+            wait
+            arrive_and_wait
+            arrive_and_drop
+
+
+   Futures (C++11)
+      promise
+      packaged_task
+      future
+      shared_future
+      async
+      launch
+      future_status
+
+      Future errors
+         future_error
+         future_category
+         future_errc
+
+
+   Safe reclamation (C++26)
+      Read-Copy-Update mechanism (RCU)
+         rcu_obj_base
+         rcu_domain
+         rcu_default_domain
+         rcu_synchronize 
+         rcu_barrier 
+         rcu_retire 
+
+      Hazard pointers
+         hazard_pointer_obj_base
+         hazard_pointer
+         make_hazard_pointer
+         
