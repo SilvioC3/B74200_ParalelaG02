@@ -24,5 +24,8 @@ sumaUnoOMP.out: sumaUnoOMP.cc
 PiPorSeriesOMP.out: PiPorSeriesOMP.cc
 	g++ -g -fopenmp PiPorSeriesOMP.cc -o PiPorSeriesOMP.out
 
+omp_mat_vec.out: omp_mat_vec.cc
+	g++ -g -fopenmp omp_mat_vec.cc -o omp_mat_vec.out
+
 clean:
 	rm -f *.out *.o
