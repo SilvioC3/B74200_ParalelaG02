@@ -40,6 +40,36 @@ void asignarPuntosAClases( long * clases, int modo ) {
 
 }
 
+/**
+ *  Recibe los centros, puntos y sus contadores, los reinicia, luego los suma de nuevo y promedia actualizando los centros
+ *  
+**/
+void actualizarCentros( VectorPuntos * centros, VectorPuntos * puntos, long * clases, long * contClases ) {
+   long clase, pto;
+
+   // primero reinicio los centros y los contadores
+   for( clase = 0; clase < centros->demeTamano(); clase++ ) {
+      ( *centros )[ clase ]->ponga( 0, 0, 0 ); // para los ejes x, y, z
+      contClases[ clase ] = 0;
+   }
+
+   // sumar puntos de cada clase
+   for( pto = 0; pto < puntos->demeTamano(); pto++ ) {
+      clase = clases[ pto ];
+      ( *centros )[ clase ]->sume( ( * puntos )[ pto ] );
+      contClases[ clase ]++;
+   }
+
+   // calcula el promedio dividiendo la suma de puntos entre su total
+   for( clase = 0; clase < centros->demeTamano(); clase++ ) {
+
+      // si existen clases promedio
+      if( contClases[ clase ] > 0) {
+         ( *centros )[ clase ]->divida( contClases[ clase ] );
+      }
+   }
+}
+
 
 /**
  *  Programa muestra
@@ -66,6 +96,8 @@ int main( int cantidad, char ** parametros ) {
 	// Coloca todos los centros en el origen
 	// Promedia los elementos del conjunto para determinar el nuevo centro
 
+      actualizarCentros( centros, puntos, clases, contClases );
+
       cambios = 0;	// Almacena la cantidad de puntos que cambiaron de conjunto
 	// Cambia la clase de cada punto al centro más cercano
 
@@ -79,4 +111,3 @@ int main( int cantidad, char ** parametros ) {
    puntos->genEpsFormat( centros, clases, (char *) "ci0117.eps" );
 
 }
-
