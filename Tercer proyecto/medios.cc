@@ -15,6 +15,7 @@
 
 #define PUNTOS 100000
 #define CLASES 17
+#define MODO 0
 
 
 int totalCambios = 0;	// Contabiliza la totalidad de los cambios realizados al grupo de puntos
@@ -25,21 +26,21 @@ int totalCambios = 0;	// Contabiliza la totalidad de los cambios realizados al g
  *  Utiliza el vector de clases para realizar la asignación
  *  
 **/
-void asignarPuntosAClases( long * clases, int modo ) {  // CAMBIOSSSSSSSSSSS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1!!!!!
+void asignarPuntosAClases( long * clases, int modo, long casillas, long muestras ) {  // CAMBIOSSSSSSSSSSS!!!!!!!!!
    long clase, pto;
 
    switch ( modo ) {
       case 0:	// Aleatorio
-         for ( pto = 0; pto < PUNTOS; pto++ ) {
-            clase = rand() % CLASES;
+         for ( pto = 0; pto < muestras; pto++ ) {
+            clase = rand() % casillas;
             clases[ pto ] = clase;
          }
          break;
       case 1:	// A construir por los estudiantes
 
          // round robin (los puntos se van asignando a los centros uno por uno como cartas repartidas en una mesa de poker)
-         for( pto = 0; pto < PUNTOS; pto++ ) {
-            clases[ pto ] = pto % CLASES;
+         for( pto = 0; pto < muestras; pto++ ) {
+            clases[ pto ] = pto % casillas;
          }
 
          break;
@@ -106,6 +107,7 @@ int main( int cantidad, char ** parametros ) {
    long casillas = CLASES;
    long muestras = PUNTOS;
    const char *nombreArchivo = "ci0117.eps";
+   int modo = MODO;
 
    // input del usuario con validacion de entrada
    if( cantidad > 1 ) { // para los puntos
@@ -139,6 +141,17 @@ int main( int cantidad, char ** parametros ) {
       }
    }
 
+   if( cantidad > 4 ) { // para el modo
+      modo = atol( parametros[ 4 ] );
+
+      if( modo != 0 && modo != 1 ) {
+         modo = MODO;
+         printf( "Modo invalido, usando modo por defecto %d\n", modo );
+      }
+
+      printf( "Modo %d\n", modo );
+   }
+
    printf( "Generando %ld puntos, para %ld clases -> salida: %s\n", muestras, casillas, nombreArchivo );
 
 // Procesar los parámetros del programa
@@ -148,7 +161,7 @@ int main( int cantidad, char ** parametros ) {
    long clases[ muestras ];		// Almacena la clase a la que pertenece cada punto
    long contClases[ casillas ];
 
-   asignarPuntosAClases( clases, 0 );	// Asigna los puntos a las clases establecidas
+   asignarPuntosAClases( clases, modo, muestras, casillas );	// Asigna los puntos a las clases establecidas
 
    do {
 	// Coloca todos los centros en el origen
@@ -171,3 +184,5 @@ int main( int cantidad, char ** parametros ) {
    puntos->genEpsFormat( centros, clases, (char *)nombreArchivo );
 
 }
+
+// FALTA TOMAR EL TIEMPO DE LA VERSION SERIAL

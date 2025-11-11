@@ -32,25 +32,27 @@ int totalCambios = 0;	// Contabiliza la totalidad de los cambios realizados al g
 void asignarPuntosAClases( long * clases, int modo, long muestras, long casillas, int hilos ) {
    long clase, pto;
 
-   switch ( modo ) {
-      case 0:	// Aleatorio
-         #pragma omp parallel for num_threads( hilos )
-         for ( pto = 0; pto < muestras; pto++ ) {
+   #pragma omp parallel num_threads( hilos ) private( clase, pto )
+   {
+      switch ( modo ) {
+         case 0:	// Aleatorio
             unsigned int seed = omp_get_thread_num() + time( NULL );
-            clase = rand_r( &seed ) % casillas;
-            clases[ pto ] = clase;
-         }
-         break;
-      case 1:	// A construir por los estudiantes
-         #pragma omp parallel for num_threads( hilos )
-         // round robin (los puntos se van asignando a los centros uno por uno como cartas repartidas en una mesa de poker)
-         for( pto = 0; pto < muestras; pto++ ) {
-            clases[ pto ] = pto % casillas;
-         }
+            #pragma omp for
+            for ( pto = 0; pto < muestras; pto++ ) {
+               clase = rand_r( &seed ) % casillas;
+               clases[ pto ] = clase;
+            }
+            break;
+         case 1:	// A construir por los estudiantes
+            #pragma omp for
+            // round robin (los puntos se van asignando a los centros uno por uno como cartas repartidas en una mesa de poker)
+            for( pto = 0; pto < muestras; pto++ ) {
+               clases[ pto ] = pto % casillas;
+            }
 
-         break;
+            break;
+      }
    }
-
 }
 
 /**
@@ -60,7 +62,7 @@ void asignarPuntosAClases( long * clases, int modo, long muestras, long casillas
 void actualizarCentros( VectorPuntos * centros, VectorPuntos * puntos, long * clases, long * contClases, int hilos ) {
    long clase, pto;
 
-   #pragma omp parallel num_threads( hilos )
+   #pragma omp parallel num_threads( hilos ) private( clase, pto ) // preguntar si se usa provate aqui o en los omp for!!!!!!!!!!!!!!!!!11
    {
         #pragma omp for
         // primero reinicio los centros y los contadores
@@ -97,7 +99,7 @@ void actualizarCentros( VectorPuntos * centros, VectorPuntos * puntos, long * cl
 void actualizarPuntos( VectorPuntos * centros, VectorPuntos * puntos, long * clases, long * contClases, long &cambios, int hilos ) {
    long pto, actual, nuevo;
 
-   #pragma omp parallel for num_threads( hilos ) reduction( +:cambios )
+   #pragma omp parallel for num_threads( hilos ) reduction( +:cambios ) private( actual, nuevo )
    // verifico si para cada punto...
    for( pto = 0; pto < puntos->demeTamano(); pto++ ) {
       actual = clases[ pto ];
@@ -150,7 +152,7 @@ int main( int cantidad, char ** parametros ) {
    if( cantidad > 3 ) { // para las clases
       casillas = atol( parametros[ 3 ] );
 
-      if( casillas < 1 ) {
+      if( casillas < 1 || casillas > muestras ) {
          casillas = CLASES;
          printf( "Cantidad de clases invalida, usando valor por defecto %ld\n", casillas );
       }
@@ -172,7 +174,7 @@ int main( int cantidad, char ** parametros ) {
    if( cantidad > 5 ) { // para el modo
       modo = atol( parametros[ 5 ] );
 
-      if( modo != 0 || modo != 1 ) {
+      if( modo != 0 && modo != 1 ) {
          modo = MODO;
          printf( "Modo invalido, usando modo por defecto %d\n", modo );
       }
