@@ -26,7 +26,7 @@ int totalCambios = 0;	// Contabiliza la totalidad de los cambios realizados al g
  *  Utiliza el vector de clases para realizar la asignación
  *  
 **/
-void asignarPuntosAClases( long * clases, int modo, long casillas, long muestras ) {  // CAMBIOSSSSSSSSSSS!!!!!!!!!
+void asignarPuntosAClases( long * clases, int modo, long muestras, long casillas ) {
    long clase, pto;
 
    switch ( modo ) {

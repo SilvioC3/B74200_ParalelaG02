@@ -31,12 +31,13 @@ int totalCambios = 0;	// Contabiliza la totalidad de los cambios realizados al g
 **/
 void asignarPuntosAClases( long * clases, int modo, long muestras, long casillas, int hilos ) {
    long clase, pto;
+   unsigned int seed;
 
    #pragma omp parallel num_threads( hilos ) private( clase, pto )
    {
       switch ( modo ) {
          case 0:	// Aleatorio
-            unsigned int seed = omp_get_thread_num() + time( NULL );
+            seed = omp_get_thread_num() + time( NULL );
             #pragma omp for
             for ( pto = 0; pto < muestras; pto++ ) {
                clase = rand_r( &seed ) % casillas;
@@ -49,7 +50,6 @@ void asignarPuntosAClases( long * clases, int modo, long muestras, long casillas
             for( pto = 0; pto < muestras; pto++ ) {
                clases[ pto ] = pto % casillas;
             }
-
             break;
       }
    }
@@ -59,10 +59,10 @@ void asignarPuntosAClases( long * clases, int modo, long muestras, long casillas
  *  Recibe los centros, puntos y sus contadores, los reinicia, luego los suma de nuevo y promedia actualizando los centros
  *  
 **/
-void actualizarCentros( VectorPuntos * centros, VectorPuntos * puntos, long * clases, long * contClases, int hilos ) {
+void actualizarCentrosOMP( VectorPuntos * centros, VectorPuntos * puntos, long * clases, long * contClases, int hilos ) {
    long clase, pto;
 
-   #pragma omp parallel num_threads( hilos ) private( clase, pto ) // preguntar si se usa provate aqui o en los omp for!!!!!!!!!!!!!!!!!11
+   #pragma omp parallel num_threads( hilos ) private( clase, pto )
    {
         #pragma omp for
         // primero reinicio los centros y los contadores
@@ -78,8 +78,8 @@ void actualizarCentros( VectorPuntos * centros, VectorPuntos * puntos, long * cl
 
             #pragma omp critical
             {
-            ( *centros )[ clase ]->sume( ( * puntos )[ pto ] );
-            contClases[ clase ]++;
+               ( *centros )[ clase ]->sume( ( * puntos )[ pto ] );
+               contClases[ clase ]++;
             }
         }
 
@@ -96,7 +96,7 @@ void actualizarCentros( VectorPuntos * centros, VectorPuntos * puntos, long * cl
 }
 
 
-void actualizarPuntos( VectorPuntos * centros, VectorPuntos * puntos, long * clases, long * contClases, long &cambios, int hilos ) {
+void actualizarPuntosOMP( VectorPuntos * centros, VectorPuntos * puntos, long * clases, long * contClases, long &cambios, int hilos ) {
    long pto, actual, nuevo;
 
    #pragma omp parallel for num_threads( hilos ) reduction( +:cambios ) private( actual, nuevo )
@@ -125,7 +125,7 @@ int main( int cantidad, char ** parametros ) {
    long casillas = CLASES;
    long muestras = PUNTOS;
    const char *nombreArchivo = "ci0117.eps";
-   double start, finish, wused; // para tomar los tiempos
+   double start, finish, wused, wusedAssign, wusedParallel; // para tomar los tiempos
    int hilos = HILOS;
    int modo = MODO;
 
@@ -179,7 +179,7 @@ int main( int cantidad, char ** parametros ) {
          printf( "Modo invalido, usando modo por defecto %d\n", modo );
       }
 
-      printf( "Modo %d\n", modo );
+      // printf( "Modo %d\n", modo ); // redundante imprimirlo aqui, lo uso para debuguear
    }
 
    printf( "Usando %d hilos para generar %ld puntos, para %ld clases -> salida: %s\n", hilos, muestras, casillas, nombreArchivo );
@@ -195,29 +195,41 @@ int main( int cantidad, char ** parametros ) {
 
    asignarPuntosAClases( clases, modo, muestras, casillas, hilos );	// Asigna los puntos a las clases establecidas
 
+   finish = omp_get_wtime();
+   wusedAssign = finish - start;
+
+   // ejecucion y medicion en paralelo con OpenMP
+   start = omp_get_wtime();
+
    do {
 	// Coloca todos los centros en el origen
 	// Promedia los elementos del conjunto para determinar el nuevo centro
 
-      actualizarCentros( centros, puntos, clases, contClases, hilos );
+      actualizarCentrosOMP( centros, puntos, clases, contClases, hilos );
 
       cambios = 0;	// Almacena la cantidad de puntos que cambiaron de conjunto
 	// Cambia la clase de cada punto al centro más cercano
 
-      actualizarPuntos( centros, puntos, clases, contClases, cambios, hilos );
+      actualizarPuntosOMP( centros, puntos, clases, contClases, cambios, hilos );
 
       totalCambios += cambios;
 
    } while ( cambios > 0 );	// Si no hay cambios el algoritmo converge
 
    finish = omp_get_wtime();
-   wused = finish - start;
+   wusedParallel = finish - start;
 
    printf( "Valor de la disimilaridad en la solución encontrada %g, con un total de %ld cambios\n", centros->disimilaridad( puntos, clases ), totalCambios );
 
-   printf( "OpenMP wall time: %.6f s\n", wused );
+   printf( "Tiempo de asignación inicial de puntos (modo %d): %.6f s\n", modo, wusedAssign );
+   printf( "Tiempo total de agrupamiento (version paralela): %.6f s\n", wusedParallel );
 
 // Con los valores encontrados genera el archivo para visualizar los resultados
    puntos->genEpsFormat( centros, clases, (char *)nombreArchivo );
 
 }
+
+// PROBAR METODOS DE SCHEDULE CON DYNAMIC Y CICLICOS PARA MEJORAR RENDIMIENTO
+// AGREGAR MAS VARIABLES PARA LOS 3 TIEMPOS
+// AGREGAR UN SEGUNDO BUCLE DO{}WHILE() PARA CORRER AMBAS VESIONES
+// CREAR COPIAS DE LOS VECTORES UNA VEZ TENGAN LOS PUNTOS ASIGNADOS O USAR UN CONSTRUCTOR POR COPIA
