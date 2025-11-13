@@ -5,6 +5,7 @@
 
 
 #include <string>
+#include <omp.h>
 
 class Punto {
    public:

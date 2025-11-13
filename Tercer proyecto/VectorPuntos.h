@@ -18,6 +18,8 @@ class VectorPuntos {
       double disimilaridad( VectorPuntos *, long * );
       void genEpsFormat( VectorPuntos *, long *, char * );
       Punto * operator [] ( long );
+      VectorPuntos(const VectorPuntos &otro);  // constructor de la copia
+
 
    private:
       long elementos;

@@ -237,3 +237,16 @@ void VectorPuntos::genEpsFormat( VectorPuntos * centros, long * clases, char * f
 
 }
 
+
+/**
+ *   Constructor de la copia
+ */
+VectorPuntos::VectorPuntos( const VectorPuntos &otro ) {
+    this->elementos = otro.elementos;
+    this->bloque = ( Punto ** ) calloc( sizeof( Punto * ), elementos );
+
+    for( long i = 0; i < elementos; i++ ) {
+        Punto *p = otro.bloque[ i ];
+        this->bloque[ i ] = new Punto( p->demeX(), p->demeY(), 0.0 );
+    }
+}
