@@ -245,8 +245,8 @@ VectorPuntos::VectorPuntos( const VectorPuntos &otro ) {
     this->elementos = otro.elementos;
     this->bloque = ( Punto ** ) calloc( sizeof( Punto * ), elementos );
 
-    for( long i = 0; i < elementos; i++ ) {
-        Punto *p = otro.bloque[ i ];
-        this->bloque[ i ] = new Punto( p->demeX(), p->demeY(), 0.0 );
+    for( long elemento = 0; elemento < elementos; elemento++ ) {
+        Punto *p = otro.bloque[ elemento ];
+        this->bloque[ elemento ] = new Punto( p->demeX(), p->demeY(), 0.0 );
     }
 }

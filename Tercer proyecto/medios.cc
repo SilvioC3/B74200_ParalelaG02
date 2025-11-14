@@ -36,9 +36,9 @@
 #include <ctime>
 #include <vector>
 
-#define HILOS 4
-#define PUNTOS 200000
-#define CLASES 17
+#define HILOS 8
+#define PUNTOS 500000
+#define CLASES 100
 #define MODO 0
 
 using namespace std;
@@ -119,56 +119,6 @@ void actualizarPuntos( VectorPuntos * centros, VectorPuntos * puntos, long * cla
       }
    }
 }
-
-
-// PREGUNTAR LA PROFE PORQUE USAR LOS RECURSOS DE OPENMP AQUI ES MUY INEFICIENTE
-
-// void actualizarPuntosOMP( VectorPuntos *centros, VectorPuntos *puntos, long *clases, long &cambios, int hilos ) {
-//    long pto, actual, nuevo, chunk;
-
-//    chunk = puntos->demeTamano() / hilos;
-   
-//    #pragma omp parallel num_threads( hilos ) schedule( static, chunk ) reduction( +:cambios ) private( actual, nuevo )
-//    for( pto = 0; pto < puntos->demeTamano(); pto++ ) {
-//       actual = clases[ pto ];
-//       nuevo = centros->masCercano( ( *puntos )[ pto ] );
-
-//       if( actual != nuevo ) {
-//          clases[ pto ] = nuevo;
-//          cambios++;
-//       }
-//    }
-// }
-
-
-// void actualizarPuntosOMP( VectorPuntos *centros, VectorPuntos *puntos, long *clases, long &cambios, int hilos ) {
-//    long pto, actual, nuevo, inicio, fin;
-   
-//    #pragma omp parallel num_threads( hilos ) private( actual, nuevo, inicio, fin )
-//    {
-
-//       int tid = omp_get_thread_num();
-
-//       // divido el trabajo por indices para cada hilo
-//       inicio = ( puntos->demeTamano() * tid ) / hilos;
-//       fin = ( puntos->demeTamano() * ( tid + 1 ) ) / hilos;
-
-//       long cambiosLocal = 0;
-
-//       for( pto = inicio; pto < fin; pto++ ) {
-//          actual = clases[ pto ];
-//          nuevo = centros->masCercano( ( *puntos )[ pto ] );
-
-//          if( actual != nuevo ) {
-//             clases[ pto ] = nuevo;
-//             cambiosLocal++;
-//          }
-//       }
-
-//       #pragma omp atomic
-//       cambios += cambiosLocal;
-//    }
-// }
 
 
 void actualizarCentrosOMP( VectorPuntos *centros, VectorPuntos *puntos, long *clases, long *contClases ) {
@@ -368,30 +318,6 @@ int main( int cantidad, char ** parametros ) {
 
    printf( "\nValor de la disimilaridad en la solución encontrada %g, con un total de %ld cambios\n", centros->disimilaridad( puntos, clases ), totalCambios );
    printf( "Tiempo total de agrupamiento (version serial): %.6f s\n", wusedSerial );
-
-
-   // totalCambios = 0;
-
-   // // OPENMP PARALLEL
-   // start = omp_get_wtime();
-
-   // do {
-   // // Coloca todos los centros en el origen
-   // // Promedia los elementos del conjunto para determinar el nuevo centro
-   //    actualizarCentros( centrosOMP, puntosOMP, clasesOMP, contClasesOMP );
-
-   //    cambios = 0;	// Almacena la cantidad de puntos que cambiaron de conjunto
-   // // Cambia la clase de cada punto al centro más cercano
-
-   //    actualizarPuntosOMP( centrosOMP, puntosOMP, clasesOMP, cambios, hilos );
-
-   //    totalCambios += cambios;
-   // } while ( cambios > 0 );	// Si no hay cambios el algoritmo converge
-   
-
-   // finish = omp_get_wtime();
-   // wusedParallel = finish - start;
-
 
    totalCambios = 0;
 
