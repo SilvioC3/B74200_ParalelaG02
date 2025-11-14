@@ -9,6 +9,26 @@
  *
 **/
 
+
+/**
+ *  Compilar con:
+ *      make
+ * 
+ *  Esto genera el ejecutable principal: medios.out
+ *
+ *  Parametros de ejecucion:
+ *      ./medios.out [hilos] [puntos] [clases] [archivo.eps] [modo]
+ *
+ *  Donde:
+ *      hilos       -> cantidad de hilos OpenMP a usar (int)
+ *      puntos      -> numero de puntos a generar (long)
+ *      clases      -> cantidad de clases/centroides (long)
+ *      archivo.eps -> nombre del archivo EPS de salida (debe terminar en .eps)
+ *      modo        -> 0 = asignacion inicial de puntos a clases por aleatoria
+ *                     1 = asignacion inicial de puntos a clases por round robin
+ */
+
+
 #include <cstdio>
 #include "VectorPuntos.h"
 #include <cstring>
