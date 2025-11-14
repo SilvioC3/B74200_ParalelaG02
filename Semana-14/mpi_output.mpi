@@ -1,0 +1,21 @@
+#!/bin/bash
+# 
+#  Author: CI0117 Programación paralela y concurrente
+#
+#  Date: 2025-ii
+#
+#
+# Parameters must be specified by SLURM directives prefixed with "#SBATCH "
+#
+#SBATCH --overcommit		# Run more jobs than the defined in SLURM nodes
+#SBATCH -J mpi_output		# Job name
+#SBATCH -o ci0117.%j.out	# Name of stdout output file (%j expands to jobId)
+#SBATCH -N 2			# Total number of nodes requested
+#SBATCH --ntasks 8		# Total number of mpi tasks requested
+#SBATCH -t 00:30:00		# Run time (hh:mm:ss) - 30 min
+#SBATCH -p debug		# Partition to use, can be: debug, normal
+
+prun ./mpi_output.out
+
+#
+

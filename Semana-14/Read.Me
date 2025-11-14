@@ -1,0 +1,91 @@
+Read.Me Semana 12
+
+[Ejercicio propuesto: 2025/Nov/14; entrega 2025/Nov/21]
+
+Objetivos
+   - Utilizar MPI en el cluster poas (10.84.19.15)
+   - Construir una tabla comparativa
+   - Práctica para el examen
+
+Requisitos
+   - Verifique que su ambiente de trabajo pueda compilar programas con MPI
+   - Debe crear una tabla comparativa, entregarla como documento aparte o comentario de su código
+   - Recuerde que el código existente en el cluster "poas" no está en control de versiones, por lo que debe asegurarse de que las copias de su código en este cluster sean respaldadas adecuamente en su repositorio.
+
+Tareas a realizar
+
+1) Intente conectarse a "poas" por medio de ssh:
+
+   [miMaquina]$ ssh [su usuario]@10.84.19.15
+   (los corchetes no deben escribirse, ejemplo rafael.arroyo@10.84.19.15)
+   (escriba su contraseña cuando le sea solicitada)
+
+2) Puede copiar archivos desde su máquina local a "poas" utilizando el comando "scp", por ejemplo, para copiar el archivo de su máquina, en el directorio actual, a su directorio casa en "poas" debe ejecutar este comando:
+
+   [miMaquina]$ scp mpi_output.c [su usuario]@10.84.19.15:
+   (copia el archivo mpi_output.c a poas en su directorio casa)
+   [miMaquina]$ scp mpi_output.mpi [su usuario]@10.84.19.15:Documents
+   (copia el archivo mpi_output.mpi a poas en su directorio "Documents")
+   [miMaquina]$ scp [su usuario]@10.84.19.15:Documents/hola.txt
+   (copia el archivo "hola.txt" desde el directorio "Documents" de poas a su directorio actual)
+
+   También puede intentar conectarse por medio de un manejador de archivos, como fue demostrado en clases, para realizar el intercambio de archivos.
+   (utilizar: sftp://10.84.19.15 para establecer la comunicación)
+
+   También, si el archivo que necesita está en el servidor "os" puede copiarlo utilizando el comando "wget" y el enlace del archivo en "os"
+
+3) Una vez que sus archivos están en el cluster puede compilar el código fuente:
+
+   [su usuario@poas MPI]$ mpicc mpi_output.c -o mpi_output.out
+
+   Intente realizar todas las correcciones de su código en su máquina local, luego vuelva a copiar este código a "poas" para realizar las pruebas.  Recuerde asegurar su código en el repositorio.
+
+
+4) Para correr el programa ejecutable en un ambiente sin control (donde pueden existir varios usuarios corriendo varias tareas simultáneamente y por lo tanto los tiempos de ejecución podrían variar sustancialmente):
+
+   [su usuario@poas MPI]$ mpiexec  -n 4 ./mpi_output.out
+
+   Intente correrlo cambiando el valor de los trabajadores solicitados (-n)
+
+5) Para correr su programa en un ambiente controlado, (se trata de un sistema de colas [SLURM] en el cual las tareas de los usuarios se ejecutan una por una, por lo que podemos asegurar que tenemos los recursos solicitados asignados exclusivamente), debe correr el siguiente comando:
+
+   [su usuario@poas MPI]$ sbatch mpi_output.mpi
+
+   El sistema de colas generará la salida de su programa en el lugar designado por la variable "#SBATCH -o " en nuestro caso "ci0117.%j.txt", donde la variable "%j" denota el número asignado en la cola
+
+   Revise el archivo "mpi_output.mpi" para comprender los parámetros designados a la tarea que queremos correr.  Intente realizar un cambio para que el sistema emplee 16 trabajadores
+
+6) Copie algunos ejemplos del material del libro de texto y realice pruebas de compilado y corrido.  Una vez que domine adecuadamente el ambiente de desarrollo, puede realizar las pruebas con su programa de la tarea programada
+
+
+10) Problema de la "papa" (opcional)
+   - Construya una solución con MPI
+
+11) Cambie su solución para el problema de la multiplicación de matrices empleando MPI
+   - Haga una tabla comparativa entre todas sus soluciones disponibles (serial, PThreads, OpenMP y MPI)
+      - Utilice varios trabajadores (1, 2, 4, 8, ... )
+
+/**
+ *  Tabla comparativa para mi algoritmo de multiplicación de matrices
+
+	┌────────┬────────┬────────┬────────┬────────┐
+	│ Trabaj │ Serial │PThreads│ OpenMP │  MPI   │
+	├────────┼────────┼────────┼────────┼────────┤
+	│    2   │        │        │        │        │
+	├────────┼────────┼────────┼────────┼────────┤
+	│    4   │        │        │        │        │
+	├────────┼────────┼────────┼────────┼────────┤
+	│    8   │        │        │        │        │
+	├────────┼────────┼────────┼────────┼────────┤
+	│   16   │        │        │        │        │
+	├────────┼────────┼────────┼────────┼────────┤
+	│   64   │        │        │        │        │
+	└────────┴────────┴────────┴────────┴────────┘
+	Tiempo empleado en segundos (ms) para n términos
+ *
+**/
+
+
+Referencias
+   Ejercicios de clase del curso
+   Material de clase en tema MPI
