@@ -36,9 +36,9 @@
 #include <ctime>
 #include <vector>
 
-#define HILOS 8
+#define HILOS 4
 #define PUNTOS 500000
-#define CLASES 100
+#define CLASES 17
 #define MODO 0
 
 using namespace std;
@@ -122,21 +122,18 @@ void actualizarPuntos( VectorPuntos * centros, VectorPuntos * puntos, long * cla
 
 
 void actualizarCentrosOMP( VectorPuntos *centros, VectorPuntos *puntos, long *clases, long *contClases ) {
-   long C = centros->demeTamano(); // C guarda cuantos centros existen
-   long P = puntos->demeTamano(); // P guarda cuantos puntos se estan agrupando
+   long C = centros->demeTamano();
+   long P = puntos->demeTamano();
 
    // solo 1 hilo reinicia todos los centros a cero
    // para evitar que varios hilos hagan trabajo duplicado
    #pragma omp single
    {
-      for( long centro = 0; centro < C; centro++ ) {
-         ( *centros )[ centro ]->ponga( 0, 0, 0 );
+      for (long centro = 0; centro < C; centro++) {
+         (*centros)[ centro ]->ponga( 0, 0, 0 );
          contClases[ centro ] = 0;
       }
    }
-
-   // todos los hilos deben esperar hasta que los centros globales hayan sido reiniciados
-   #pragma omp barrier
 
    // cada hilo crea un vector de puntos local que acumula las sumas de puntos por cada clase
    // sumLocal va a guardar la suma de coordenadas de todos los puntos que este hilo esta viendo en la clase C de turno
@@ -145,50 +142,45 @@ void actualizarCentrosOMP( VectorPuntos *centros, VectorPuntos *puntos, long *cl
    // un arreglo local de contadores para saber cuantos puntos son de cada clase en este hilo
    vector< long > countLocal( C, 0 );
 
-
    // esto paraleliza el recorrido de todos los puntos y aqui cada hilo en teoria recibe una parte de los puntos
    // este nowait evita que los hilos esperen al final de mi for()
-   #pragma omp for nowait
-   for( long pto = 0; pto < P; pto++ ) {
-      long clase = clases[ pto ]; // guarda clase tenia asignado este punto
-      sumLocal[ clase ].sume( ( *puntos )[ pto ] ); // suma sus coordenadas en el sumLocal creado antes correspondiente a su clase
-      countLocal[ clase ]++; // este aumento tambien es local para el hilo
+   #pragma omp for schedule(static) nowait
+   for (long pto = 0; pto < P; pto++) {
+      long clase = clases[ pto ];
+      sumLocal[ clase ].sume( (*puntos)[ pto ] );
+      countLocal[ clase ]++;
    }
 
    // zona critica para reduccion = cada hilo combina sus resultados locales con los resultados globales acutles
    #pragma omp critical
-   for( long centro = 0; centro < C; centro++ ) {
-      ( *centros )[ centro ]->sume( &sumLocal[ centro ] ); // se suma contribucion del cetnro local a la del centro global
-      contClases[ centro ] += countLocal[ centro ]; // sumo los puntos que se aportan a la clase
+   {
+      for (long centro = 0; centro < C; centro++) {
+         (*centros)[ centro ]->sume( &sumLocal[ centro ] );
+         contClases[ centro ] += countLocal[ centro ];
+      }
    }
-
-   #pragma omp barrier
 
    #pragma omp single
    for (long centro = 0; centro < C; centro++) {
-      if( contClases[ centro ] > 0) {
-         ( *centros )[ centro ]->divida( contClases[ centro ] ); // calculo del promedio final solo si la clase no quedo vacia
+      if (contClases[ centro ] > 0) {
+         (*centros)[ centro ]->divida( contClases[ centro ] );
       }
    }
 }
 
 
 void actualizarPuntosOMP( VectorPuntos *centros, VectorPuntos *puntos, long *clases, long &cambios ) {
-   long cambiosLocal = 0;
 
-   #pragma omp for nowait
-   for( long pto = 0; pto < puntos->demeTamano(); pto++ ) {
+   #pragma omp for schedule(static) reduction(+:cambios) nowait
+   for (long pto = 0; pto < puntos->demeTamano(); pto++) {
       long old = clases[ pto ];
-      long neu = centros->masCercano( ( *puntos )[ pto ] );
+      long neu = centros->masCercano( (*puntos)[ pto ] );
 
-      if( old != neu ) {
+      if (old != neu) {
          clases[ pto ] = neu;
-         cambiosLocal++;
+         cambios++;
       }
    }
-
-   #pragma omp atomic
-   cambios += cambiosLocal;
 }
 
 
@@ -319,6 +311,9 @@ int main( int cantidad, char ** parametros ) {
    printf( "\nValor de la disimilaridad en la solución encontrada %g, con un total de %ld cambios\n", centros->disimilaridad( puntos, clases ), totalCambios );
    printf( "Tiempo total de agrupamiento (version serial): %.6f s\n", wusedSerial );
 
+
+   // PARALELA
+
    totalCambios = 0;
 
    start = omp_get_wtime();
@@ -326,29 +321,26 @@ int main( int cantidad, char ** parametros ) {
    #pragma omp parallel num_threads( hilos ) shared( centrosOMP, puntosOMP, clasesOMP, contClasesOMP, totalCambios )
    {
       do {
-
-         #pragma omp single
-         cambios = 0;
-
          // Coloca todos los centros en el origen
          // Promedia los elementos del conjunto para determinar el nuevo centro
-         actualizarCentrosOMP(centrosOMP, puntosOMP, clasesOMP, contClasesOMP);
-
+         actualizarCentrosOMP( centrosOMP, puntosOMP, clasesOMP, contClasesOMP );
          
-         actualizarPuntosOMP(centrosOMP, puntosOMP, clasesOMP, cambios);
+         #pragma omp single
+         cambios = 0;
+         
+         actualizarPuntosOMP( centrosOMP, puntosOMP, clasesOMP, cambios );
 
          #pragma omp barrier
 
          #pragma omp single
          totalCambios += cambios;
 
-         #pragma omp barrier
-
-      } while (cambios > 0); // Si no hay cambios el algoritmo converge
+      } while ( cambios > 0 ); // Si no hay cambios el algoritmo converge
    }
 
    finish = omp_get_wtime();
    wusedParallel = finish - start;
+
 
    printf( "\nValor de la disimilaridad en la solución encontrada %g, con un total de %ld cambios\n", centrosOMP->disimilaridad( puntosOMP, clasesOMP ), totalCambios );
    printf( "Tiempo total de agrupamiento (version paralela): %.6f s\n", wusedParallel );
@@ -368,6 +360,3 @@ int main( int cantidad, char ** parametros ) {
    delete puntosOMP;
    delete centrosOMP;
 }
-
-// AGREGAR LA 3RA DIMENSION
-// README

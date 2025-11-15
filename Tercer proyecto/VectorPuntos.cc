@@ -22,9 +22,26 @@ double randf( double base ) {
  *   Rellena el vector de puntos con puntos definidos en un circulo
  *
 **/
+// VectorPuntos::VectorPuntos( long cantidad, double radio ) {
+//    long punto;
+//    double angulo, r, x, y;
+
+//    this->elementos = cantidad;
+//    this->bloque = (Punto **) calloc( sizeof( Punto *), cantidad );
+//    for ( punto = 0; punto < cantidad; punto++ ) {
+//       angulo = randf( 2 * M_PI );
+//       r = randf( radio );
+//       x = r * cos( angulo );
+//       y = r * sin( angulo );
+//       this->bloque[ punto ] = new Punto( x, y );
+//    }
+
+// }
+
+
 VectorPuntos::VectorPuntos( long cantidad, double radio ) {
    long punto;
-   double angulo, r, x, y;
+   double angulo, r, x, y, z;
 
    this->elementos = cantidad;
    this->bloque = (Punto **) calloc( sizeof( Punto *), cantidad );
@@ -33,9 +50,10 @@ VectorPuntos::VectorPuntos( long cantidad, double radio ) {
       r = randf( radio );
       x = r * cos( angulo );
       y = r * sin( angulo );
-      this->bloque[ punto ] = new Punto( x, y );
-   }
+      z = randf( radio );
 
+      this->bloque[ punto ] = new Punto( x, y, z );
+   }
 }
 
 
@@ -247,6 +265,8 @@ VectorPuntos::VectorPuntos( const VectorPuntos &otro ) {
 
     for( long elemento = 0; elemento < elementos; elemento++ ) {
         Punto *p = otro.bloque[ elemento ];
-        this->bloque[ elemento ] = new Punto( p->demeX(), p->demeY(), 0.0 );
+        // this->bloque[ elemento ] = new Punto( p->demeX(), p->demeY(), 0.0 );
+        this->bloque[ elemento ] = new Punto( p->demeX(), p->demeY(), p->demeZ() );
+
     }
 }

@@ -49,6 +49,15 @@ double Punto::demeY() {
 
 }
 
+
+/**
+ *  Retorna el valor de la coordenada z
+**/
+double Punto::demeZ() {
+   return this->z;
+}
+
+
 /**
  *  Cambia el valor de las coordenadas
 **/
@@ -66,16 +75,29 @@ void Punto::ponga( double vx, double vy, double vz ) {
  *   Por el momento utiliza solo dos coordenadas x y y
  *
 **/
+// double Punto::dist2( Punto * otro ) {
+//    double dx = this->x - otro->x;
+//    double dy = this->y - otro->y;
+//    double resultado;
+
+//    resultado = dx * dx + dy * dy;
+
+//    return resultado;
+
+// }
+
+
 double Punto::dist2( Punto * otro ) {
    double dx = this->x - otro->x;
    double dy = this->y - otro->y;
+   double dz = this->z - otro->z;
    double resultado;
 
-   resultado = dx * dx + dy * dy;
+   resultado = dx * dx + dy * dy + dz * dz;
 
    return resultado;
-
 }
+
 
 
 /**
