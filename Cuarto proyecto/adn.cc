@@ -28,7 +28,7 @@ ADN::ADN( int length ) {
  
    this->sequence = std::string( "" );
    for ( posicion = 0; posicion < length; posicion++ ) {
-      switch ( random() % 4 ) {
+      switch ( rand() % 4 ) {
          case 0:
             base = 'G';	// Nucleotids
             break;

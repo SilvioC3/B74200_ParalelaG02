@@ -6,6 +6,7 @@
  * Grupos  2 y 3
  *
 **/
+#pragma once
 
 #include <string>
 

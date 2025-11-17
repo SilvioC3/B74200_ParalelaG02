@@ -9,11 +9,14 @@
  *
 **/
 
+#include <iostream>
 #include <stdio.h>
 #include <string>
 
 #include "adn.h"
+#include "lcs.h"
 
+using namespace std;
 
 /**
  *
@@ -39,8 +42,19 @@ int main( int argumentos, char ** valores ) {
    ADN * adn3 = new ADN( 1024 );
    std::string test = "ACCGGT";
 
-   printf( "Random sequence: %s\n", adn3->toString().c_str() );
+//    printf( "Random sequence: %s\n", adn3->toString().c_str() );
 //   adn1->printSeqs();
+
+
+	string S1 = adn1->toString();
+	string S2 = adn2->toString();
+
+	LCS solucionador;
+
+	string serial = solucionador.serialLCS( S1, S2 );
+
+	cout << "LCS serial de tamaño [" << serial.size() << "] encontrada:\n";
+    cout << serial << "\n";
 
    delete adn3;
    delete adn2;

@@ -14,4 +14,3 @@ medios.out: Punto.o VectorPuntos.o medios.o
 
 clean:
 	rm -f *.o *.out
-
