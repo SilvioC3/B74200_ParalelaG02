@@ -43,7 +43,7 @@
 
 using namespace std;
 
-int totalCambios = 0;	// Contabiliza la totalidad de los cambios realizados al grupo de puntos
+long totalCambios = 0;	// Contabiliza la totalidad de los cambios realizados al grupo de puntos
 
 /**
  *  Coloca a cada punto en una clase de manera aleatoria

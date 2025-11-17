@@ -99,3 +99,24 @@ dx² + dy²  ->  dx² + dy² + dz²
 
 *Resultado:*
 La versión paralela supera a la serial con un pequeño pero real SpeedUp ≈ 1.0055x.
+
+
+## En este otro resultado que corri en mi PC de escritorio del mismo codigo
+
+juan@SpookX:/mnt/c/VSCode/B74200_ParalelaG02/Tercer proyecto$ make
+g++ -g -c Punto.cc
+g++ -g -c VectorPuntos.cc
+g++ -g -c medios.cc
+g++ -g -fopenmp medios.o VectorPuntos.o Punto.o -o medios.out
+juan@SpookX:/mnt/c/VSCode/B74200_ParalelaG02/Tercer proyecto$ ./medios.out
+Usando 4 hilos para generar 500000 puntos, para 17 clases -> salida: ci0117.eps
+
+Tiempo de asignación inicial de puntos (modo 0): 0.009803 s
+
+Valor de la disimilaridad en la solución encontrada 3.64965e+06, con un total de 1315197 cambios
+Tiempo total de agrupamiento (version serial): 28.681818 s
+
+Valor de la disimilaridad en la solución encontrada 3.64965e+06, con un total de 1315197 cambios
+Tiempo total de agrupamiento (version paralela): 28.148548 s
+
+SpeedUp: 1.0189x
