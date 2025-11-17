@@ -129,7 +129,7 @@ void actualizarCentrosOMP( VectorPuntos *centros, VectorPuntos *puntos, long *cl
    // para evitar que varios hilos hagan trabajo duplicado
    #pragma omp single
    {
-      for (long centro = 0; centro < C; centro++) {
+      for( long centro = 0; centro < C; centro++ ) {
          (*centros)[ centro ]->ponga( 0, 0, 0 );
          contClases[ centro ] = 0;
       }
@@ -144,8 +144,8 @@ void actualizarCentrosOMP( VectorPuntos *centros, VectorPuntos *puntos, long *cl
 
    // esto paraleliza el recorrido de todos los puntos y aqui cada hilo en teoria recibe una parte de los puntos
    // este nowait evita que los hilos esperen al final de mi for()
-   #pragma omp for schedule(static) nowait
-   for (long pto = 0; pto < P; pto++) {
+   #pragma omp for schedule( static ) nowait
+   for( long pto = 0; pto < P; pto++ ) {
       long clase = clases[ pto ];
       sumLocal[ clase ].sume( (*puntos)[ pto ] );
       countLocal[ clase ]++;
@@ -154,15 +154,15 @@ void actualizarCentrosOMP( VectorPuntos *centros, VectorPuntos *puntos, long *cl
    // zona critica para reduccion = cada hilo combina sus resultados locales con los resultados globales acutles
    #pragma omp critical
    {
-      for (long centro = 0; centro < C; centro++) {
+      for( long centro = 0; centro < C; centro++ ) {
          (*centros)[ centro ]->sume( &sumLocal[ centro ] );
          contClases[ centro ] += countLocal[ centro ];
       }
    }
 
    #pragma omp single
-   for (long centro = 0; centro < C; centro++) {
-      if (contClases[ centro ] > 0) {
+   for( long centro = 0; centro < C; centro++ ) {
+      if( contClases[ centro ] > 0 ) {
          (*centros)[ centro ]->divida( contClases[ centro ] );
       }
    }
@@ -171,12 +171,12 @@ void actualizarCentrosOMP( VectorPuntos *centros, VectorPuntos *puntos, long *cl
 
 void actualizarPuntosOMP( VectorPuntos *centros, VectorPuntos *puntos, long *clases, long &cambios ) {
 
-   #pragma omp for schedule(static) reduction(+:cambios) nowait
-   for (long pto = 0; pto < puntos->demeTamano(); pto++) {
+   #pragma omp for schedule( static ) reduction( +:cambios ) nowait
+   for( long pto = 0; pto < puntos->demeTamano(); pto++ ) {
       long old = clases[ pto ];
       long neu = centros->masCercano( (*puntos)[ pto ] );
 
-      if (old != neu) {
+      if( old != neu ) {
          clases[ pto ] = neu;
          cambios++;
       }
