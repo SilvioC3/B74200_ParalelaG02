@@ -37,7 +37,7 @@
 #include <vector>
 
 #define HILOS 4
-#define PUNTOS 500000
+#define PUNTOS 1000000
 #define CLASES 17
 #define MODO 0
 
@@ -121,66 +121,165 @@ void actualizarPuntos( VectorPuntos * centros, VectorPuntos * puntos, long * cla
 }
 
 
-void actualizarCentrosOMP( VectorPuntos *centros, VectorPuntos *puntos, long *clases, long *contClases ) {
+// // APPROACH BASADO EN REPARTIR PUNTOS DONDE LOS CENTROS CUALQUIERA LOSP UEDE ACCEDER
+// void actualizarCentrosOMP( VectorPuntos *centros, VectorPuntos *puntos, long *clases, long *contClases ) {
+//    long C = centros->demeTamano();
+//    long P = puntos->demeTamano();
+
+//    // solo 1 hilo reinicia todos los centros a cero
+//    // para evitar que varios hilos hagan trabajo duplicado
+//    #pragma omp single
+//    {
+//       for( long centro = 0; centro < C; centro++ ) {
+//          (*centros)[ centro ]->ponga( 0, 0, 0 );
+//          contClases[ centro ] = 0;
+//       }
+//    }
+
+//    // cada hilo crea un vector de puntos local que acumula las sumas de puntos por cada clase
+//    // sumLocal va a guardar la suma de coordenadas de todos los puntos que este hilo esta viendo en la clase C de turno
+//    vector< Punto > sumLocal( C, Punto( 0, 0, 0 ) );
+
+//    // un arreglo local de contadores para saber cuantos puntos son de cada clase en este hilo
+//    vector< long > countLocal( C, 0 );
+
+//    // esto paraleliza el recorrido de todos los puntos y aqui cada hilo en teoria recibe una parte de los puntos
+//    // este nowait evita que los hilos esperen al final de mi for()
+//    #pragma omp for schedule( static ) nowait
+//    for( long pto = 0; pto < P; pto++ ) {
+//       long clase = clases[ pto ];
+//       sumLocal[ clase ].sume( (*puntos)[ pto ] );
+//       countLocal[ clase ]++;
+//    }
+
+//    // zona critica para reduccion = cada hilo combina sus resultados locales con los resultados globales acutles
+//    #pragma omp critical
+//    {
+//       for( long centro = 0; centro < C; centro++ ) {
+//          (*centros)[ centro ]->sume( &sumLocal[ centro ] );
+//          contClases[ centro ] += countLocal[ centro ];
+//       }
+//    }
+
+//    #pragma omp single
+//    for( long centro = 0; centro < C; centro++ ) {
+//       if( contClases[ centro ] > 0 ) {
+//          (*centros)[ centro ]->divida( contClases[ centro ] );
+//       }
+//    }
+// }
+
+
+// void actualizarPuntosOMP( VectorPuntos *centros, VectorPuntos *puntos, long *clases, long &cambios ) {
+
+//    #pragma omp for schedule( static ) reduction( +:cambios ) nowait
+//    for( long pto = 0; pto < puntos->demeTamano(); pto++ ) {
+//       long old = clases[ pto ];
+//       long neu = centros->masCercano( (*puntos)[ pto ] );
+
+//       if( old != neu ) {
+//          clases[ pto ] = neu;
+//          cambios++;
+//       }
+//    }
+// }
+
+
+// ESTE ES MI APPROACH NUEVO DONDE LA REPARTICION ES DE LOS CENTROS ENTRE LOS HILOS Y TODOS TIENEN ACCESO A LOS PUNTOS
+void actualizarCentrosOMP_clases( VectorPuntos *centros, VectorPuntos *puntos, long *clases, long *contClases ) {
+   int tid = omp_get_thread_num();
+   int numThreads = omp_get_num_threads();
+
    long C = centros->demeTamano();
    long P = puntos->demeTamano();
 
-   // solo 1 hilo reinicia todos los centros a cero
-   // para evitar que varios hilos hagan trabajo duplicado
-   #pragma omp single
-   {
-      for( long centro = 0; centro < C; centro++ ) {
-         (*centros)[ centro ]->ponga( 0, 0, 0 );
-         contClases[ centro ] = 0;
-      }
+   // division de clases entre hilos
+   long clasesPorHilo = C / numThreads;
+   long iniClase = tid * clasesPorHilo;
+   long finClase;
+
+   if( tid == ( numThreads - 1 )) {
+      finClase = C; // el ultimo hilo toma hasta le final
+
+   } else {
+      finClase = iniClase + clasesPorHilo; // sino los demas toman su bloque normal de clases
    }
 
-   // cada hilo crea un vector de puntos local que acumula las sumas de puntos por cada clase
-   // sumLocal va a guardar la suma de coordenadas de todos los puntos que este hilo esta viendo en la clase C de turno
-   vector< Punto > sumLocal( C, Punto( 0, 0, 0 ) );
+   // cada hilo reinicia solo las clases que le pertenecen
+   for( long clase = iniClase; clase < finClase; clase++ ) {
+      (*centros)[ clase ]->ponga( 0, 0, 0 );
+      contClases[ clase ] = 0;
+   }
 
-   // un arreglo local de contadores para saber cuantos puntos son de cada clase en este hilo
+   // sincronizamos para que todos comiencen desde cero
+   #pragma omp barrier
+
+   // defino un chunk manual de puntos
+   long chunk = ( P + numThreads - 1 ) / numThreads;
+   long iniP = tid * chunk;
+   long finP = min( P, iniP + chunk );
+
+   // sumas locales solo para clases que este hilo maneja
+   vector< Punto > sumaLocal( C, Punto( 0, 0, 0 ) );
    vector< long > countLocal( C, 0 );
 
-   // esto paraleliza el recorrido de todos los puntos y aqui cada hilo en teoria recibe una parte de los puntos
-   // este nowait evita que los hilos esperen al final de mi for()
-   #pragma omp for schedule( static ) nowait
-   for( long pto = 0; pto < P; pto++ ) {
-      long clase = clases[ pto ];
-      sumLocal[ clase ].sume( (*puntos)[ pto ] );
-      countLocal[ clase ]++;
-   }
-
-   // zona critica para reduccion = cada hilo combina sus resultados locales con los resultados globales acutles
-   #pragma omp critical
-   {
-      for( long centro = 0; centro < C; centro++ ) {
-         (*centros)[ centro ]->sume( &sumLocal[ centro ] );
-         contClases[ centro ] += countLocal[ centro ];
+   // cada hilo recorre sus puntos
+   for( long punto = iniP; punto < finP; punto++ ) {
+      long c = clases[ punto ];
+      if( c >= iniClase && c < finClase ) {   // solo toca sus propias clases
+         sumaLocal[ c ].sume( (*puntos)[ punto ] );
+         countLocal[ c ]++;
       }
    }
 
-   #pragma omp single
-   for( long centro = 0; centro < C; centro++ ) {
-      if( contClases[ centro ] > 0 ) {
-         (*centros)[ centro ]->divida( contClases[ centro ] );
+   // escribir directamente en los centros globales
+   for( long clase = iniClase; clase < finClase; clase++ ) {
+      if( countLocal[ clase ] > 0 ) {
+         (*centros)[ clase ]->ponga(
+            sumaLocal[ clase ].demeX(),
+            sumaLocal[ clase ].demeY(),
+            sumaLocal[ clase].demeZ()
+         );
+
+         contClases[ clase ] = countLocal[ clase ];
+      }
+   }
+
+   #pragma omp barrier
+
+   for( long clase = iniClase; clase < finClase; clase++ ) {
+      if( contClases[ clase ] > 0 ) {
+         (*centros)[ clase ]->divida(contClases[ clase ] );
       }
    }
 }
 
 
-void actualizarPuntosOMP( VectorPuntos *centros, VectorPuntos *puntos, long *clases, long &cambios ) {
+void actualizarPuntosOMP_clases( VectorPuntos *centros, VectorPuntos *puntos, long *clases, long &cambios ) {
+   int tid = omp_get_thread_num();
+   int numThreads = omp_get_num_threads();
 
-   #pragma omp for schedule( static ) reduction( +:cambios ) nowait
-   for( long pto = 0; pto < puntos->demeTamano(); pto++ ) {
-      long old = clases[ pto ];
-      long neu = centros->masCercano( (*puntos)[ pto ] );
+   long P = puntos->demeTamano();
+
+   long chunk = ( P + numThreads - 1 ) / numThreads;
+   long iniP = tid * chunk;
+   long finP = min( P, iniP + chunk );
+
+   long misCambios = 0;
+
+   for( long punto = iniP; punto < finP; punto++ ) {
+      long old = clases[ punto ];
+      long neu = centros->masCercano( (*puntos)[ punto ] );
 
       if( old != neu ) {
-         clases[ pto ] = neu;
-         cambios++;
+         clases[ punto ] = neu;
+         misCambios++;
       }
    }
+
+   // acumulo cambios con reduccion manual
+   #pragma omp atomic
+   cambios += misCambios;
 }
 
 
@@ -312,8 +411,36 @@ int main( int cantidad, char ** parametros ) {
    printf( "Tiempo total de agrupamiento (version serial): %.6f s\n", wusedSerial );
 
 
-   // PARALELA
+   // // PARALELA
 
+   // totalCambios = 0;
+
+   // start = omp_get_wtime();
+
+   // #pragma omp parallel num_threads( hilos ) shared( centrosOMP, puntosOMP, clasesOMP, contClasesOMP, totalCambios )
+   // {
+   //    do {
+   //       // Coloca todos los centros en el origen
+   //       // Promedia los elementos del conjunto para determinar el nuevo centro
+   //       actualizarCentrosOMP( centrosOMP, puntosOMP, clasesOMP, contClasesOMP );
+         
+   //       #pragma omp single
+   //       cambios = 0;
+         
+   //       actualizarPuntosOMP( centrosOMP, puntosOMP, clasesOMP, cambios );
+
+   //       #pragma omp barrier
+
+   //       #pragma omp single
+   //       totalCambios += cambios;
+
+   //    } while ( cambios > 0 ); // Si no hay cambios el algoritmo converge
+   // }
+
+   // finish = omp_get_wtime();
+   // wusedParallel = finish - start;
+
+   // PARALELA
    totalCambios = 0;
 
    start = omp_get_wtime();
@@ -321,26 +448,23 @@ int main( int cantidad, char ** parametros ) {
    #pragma omp parallel num_threads( hilos ) shared( centrosOMP, puntosOMP, clasesOMP, contClasesOMP, totalCambios )
    {
       do {
-         // Coloca todos los centros en el origen
-         // Promedia los elementos del conjunto para determinar el nuevo centro
-         actualizarCentrosOMP( centrosOMP, puntosOMP, clasesOMP, contClasesOMP );
-         
+         actualizarCentrosOMP_clases( centrosOMP, puntosOMP, clasesOMP, contClasesOMP );
+
          #pragma omp single
          cambios = 0;
-         
-         actualizarPuntosOMP( centrosOMP, puntosOMP, clasesOMP, cambios );
+
+         actualizarPuntosOMP_clases( centrosOMP, puntosOMP, clasesOMP, cambios );
 
          #pragma omp barrier
 
          #pragma omp single
          totalCambios += cambios;
 
-      } while ( cambios > 0 ); // Si no hay cambios el algoritmo converge
+      } while( cambios > 0 );
    }
 
    finish = omp_get_wtime();
    wusedParallel = finish - start;
-
 
    printf( "\nValor de la disimilaridad en la solución encontrada %g, con un total de %ld cambios\n", centrosOMP->disimilaridad( puntosOMP, clasesOMP ), totalCambios );
    printf( "Tiempo total de agrupamiento (version paralela): %.6f s\n", wusedParallel );
