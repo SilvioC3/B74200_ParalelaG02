@@ -59,8 +59,8 @@ int main( int argumentos, char ** valores ) {
 		//   printf( "Random sequence: %s\n", adn3->toString().c_str() );
 		//   adn1->printSeqs();
 
-		ADN * adn1 = new ADN( 300 );
-		ADN * adn2 = new ADN( 300 );
+		ADN * adn1 = new ADN( 3000 );
+		ADN * adn2 = new ADN( 3000 );
 
 		S1 = adn1->toString();
 		S2 = adn2->toString();
@@ -73,9 +73,9 @@ int main( int argumentos, char ** valores ) {
 		finish = MPI_Wtime();
 		wusedSerial = finish - start;
 
-		cout << "LCS serial de tamaño [" << serial.size() << "] encontrada:\n";
-		cout << serial << "\n";
-		cout << "Tiempo version serial: " << ( wusedSerial ) << " segundos\n" << endl;
+		cout << "LCS serial de tamaño [" << serial.size() << "] encontrada:" << endl;
+		cout << serial << endl;
+		cout << "\nTiempo version serial: " << wusedSerial << " segundos" << endl;
 
 		// delete adn3;
 		delete adn2;
@@ -112,11 +112,13 @@ int main( int argumentos, char ** valores ) {
 
 	if( rank == 0 ) {
 
-		cout << "=== PRUEBA MPI (" << size << " procesos) ===\n";
-        cout << "LCS paralela [" << paralela.size() << "]: " << paralela << "\n";
-        cout << "Tiempo paralelo: " << ( wusedParallel ) << " segundos\n" << endl;
+		cout << "\nLCS paralela con " << size << " procesos y de tamaño [" << paralela.size() << "] encontrada:" << endl;
+		cout << paralela << endl;
+		cout << "\nTiempo version paralela: " << wusedParallel << " segundos" << endl;
 
-    	cout << "Speedup = serial / paralelo = " << (wusedSerial / wusedParallel) << "x\n";
+		double speedUp = wusedSerial / wusedParallel;
+
+		cout << "\nSpeedUp: " << speedUp << "x" << endl;
 	}
 
 	MPI_Finalize();
