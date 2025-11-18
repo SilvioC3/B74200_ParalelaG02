@@ -7,6 +7,8 @@
 #include <unistd.h>
 #include <string>
 #include <vector>
+#include <mpi.h>
+#include <iostream>
 
 #include "adn.h"
 
@@ -21,5 +23,5 @@ class LCS {
         ~LCS();
 
         string serialLCS( string& S1, string& S2);
-
+        string paralelaLCS( string& S1, string& S2 );
 };

@@ -12,49 +12,6 @@ LCS::~LCS() {
 
 string LCS::serialLCS( string& S1, string& S2 ) {
 
-    matriz = vector< vector< int >>( S1.size() + 1, vector< int >( S2.size() + 1, 0 ) );
-
-    for( int i = 1; i <= S1.size(); i++ ) {
-
-        for( int j = 1; j <= S2.size(); j++ ) {
-
-            if( S1[ i - 1 ] == S2[ j - 1 ]) {
-
-                matriz[ i ][ j ] = matriz[ i - 1 ][ j - 1 ] + 1;
-            } else {
-
-                matriz[ i ][ j ] = max( matriz[ i - 1 ][ j ], matriz[ i ][ j - 1 ]);
-            }
-        }
-    }
-
-    string resultado = "";
-
-    int i = S1.size();
-    int j = S2.size();
-
-    while( i > 0 && j > 0 ) {
-
-        if( S1[ i - 1 ] == S2[ j - 1 ] ) {
-
-            resultado = S1[ i - 1 ] + resultado;
-
-            i--;
-            j--;
-        } else if( matriz[ i - 1 ][ j ] > matriz[ i ][ j - 1 ] ) {
-            
-            i--;
-        } else {
-            
-            j--;
-        }
-    }
-
-    return resultado;
-}
-
-string LCS::serialLCS( string& S1, string& S2 ) {
-
     // inicializo la matriz de la clase como un vector 2D
     matriz = vector< vector< int >>(      
         S1.size() + 1, // cantidad de filas = largo de S1 + 1
@@ -105,6 +62,64 @@ string LCS::serialLCS( string& S1, string& S2 ) {
         } else {
 
             j--; // me muevo hacia la izquierda
+        }
+    }
+
+    return resultado;
+}
+
+
+string LCS::paralelaLCS( string& S1, string& S2) {
+
+    int rank, size;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+    int n = S1.size();
+    int m = S2.size();
+
+    matriz = vector<vector<int>>(n+1, vector<int>(m+1, 0));
+
+    int totalDiag = n + m;
+
+    for(int k = 2; k <= totalDiag; k++) {
+
+        int i_min = max(1, k - m);
+        int i_max = min(n, k - 1);
+
+        int totalCeldas = i_max - i_min + 1;
+        int chunk = (totalCeldas + size - 1) / size;
+
+        int start = i_min + rank * chunk;
+        int end   = min(i_max, start + chunk - 1);
+
+        for(int i = start; i <= end; i++) {
+            int j = k - i;
+
+            if(j > 0 && j <= m) {
+                if(S1[i-1] == S2[j-1])
+                    matriz[i][j] = matriz[i-1][j-1] + 1;
+                else
+                    matriz[i][j] = max(matriz[i-1][j], matriz[i][j-1]);
+            }
+        }
+
+        MPI_Barrier(MPI_COMM_WORLD);
+        MPI_Bcast(&matriz[0][0], (n+1)*(m+1), MPI_INT, 0, MPI_COMM_WORLD);
+    }
+
+    string resultado = "";
+
+    if(rank == 0) {
+        int i = n, j = m;
+
+        while(i > 0 && j > 0) {
+            if(S1[i-1] == S2[j-1]) {
+                resultado = S1[i-1] + resultado;
+                i--; j--;
+            }
+            else if(matriz[i-1][j] > matriz[i][j-1]) i--;
+            else j--;
         }
     }
 

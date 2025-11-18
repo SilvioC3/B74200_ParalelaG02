@@ -12,6 +12,7 @@
 #include <iostream>
 #include <stdio.h>
 #include <string>
+#include <mpi.h>
 
 #include "adn.h"
 #include "lcs.h"
@@ -37,28 +38,86 @@ void printSubsequences( std::string str, int start, int end, std::string curStr 
 
 
 int main( int argumentos, char ** valores ) {
-   ADN * adn1 = new ADN( "ACCGGTCGAGTGCGCGGAAGCCGGCCGAA" );
-   ADN * adn2 = new ADN( "GTCGTTCGGAATGGCCGTTGCTCTGTAA" );
-   ADN * adn3 = new ADN( 1024 );
-   std::string test = "ACCGGT";
+	double start, finish, wusedSerial, wusedParallel;
+	string S1, S2;
 
-//    printf( "Random sequence: %s\n", adn3->toString().c_str() );
-//   adn1->printSeqs();
+	// inicializacion de variables por mejorar
+	MPI_Init( &argumentos, &valores );
 
+	int rank, size;
 
-	string S1 = adn1->toString();
-	string S2 = adn2->toString();
+	MPI_Comm_rank( MPI_COMM_WORLD, &rank );
+	MPI_Comm_size( MPI_COMM_WORLD, &size );
 
-	LCS solucionador;
+	// solo el hilo de ranking 0 crea las cadenas y corre serialmente
+	if( rank == 0 ) {
+		// ADN * adn1 = new ADN( "ACCGGTCGAGTGCGCGGAAGCCGGCCGAA" );
+		// ADN * adn2 = new ADN( "GTCGTTCGGAATGGCCGTTGCTCTGTAA" );
+		// ADN * adn3 = new ADN( 1024 );
+		// std::string test = "ACCGGT";
 
-	string serial = solucionador.serialLCS( S1, S2 );
+		//   printf( "Random sequence: %s\n", adn3->toString().c_str() );
+		//   adn1->printSeqs();
 
-	cout << "LCS serial de tamaño [" << serial.size() << "] encontrada:\n";
-    cout << serial << "\n";
+		ADN * adn1 = new ADN( 300 );
+		ADN * adn2 = new ADN( 300 );
 
-   delete adn3;
-   delete adn2;
-   delete adn1;
+		S1 = adn1->toString();
+		S2 = adn2->toString();
 
+		// CORRIDA SERIAL
+		LCS solucionador;
+
+		start = MPI_Wtime();
+		string serial = solucionador.serialLCS( S1, S2 );
+		finish = MPI_Wtime();
+		wusedSerial = finish - start;
+
+		cout << "LCS serial de tamaño [" << serial.size() << "] encontrada:\n";
+		cout << serial << "\n";
+		cout << "Tiempo version serial: " << ( wusedSerial ) << " segundos\n" << endl;
+
+		// delete adn3;
+		delete adn2;
+		delete adn1;
+	}
+
+	int n, m;
+
+	if( rank == 0 ) {
+		n = S1.size();
+		m = S2.size();
+	}
+
+	MPI_Bcast( &n, 1, MPI_INT, 0, MPI_COMM_WORLD );
+    MPI_Bcast( &m, 1, MPI_INT, 0, MPI_COMM_WORLD );
+
+    if( rank != 0 ){
+        S1.resize( n );
+        S2.resize( m );
+    }
+
+	MPI_Bcast( &S1[ 0 ], n, MPI_CHAR, 0, MPI_COMM_WORLD );
+	MPI_Bcast( &S2[ 0 ], m, MPI_CHAR, 0, MPI_COMM_WORLD );
+
+	// VERSION PARALELA
+	LCS wavefront;
+
+	MPI_Barrier( MPI_COMM_WORLD );
+
+	start = MPI_Wtime();
+	string paralela = wavefront.paralelaLCS( S1, S2 );
+	finish = MPI_Wtime();
+	wusedParallel = finish - start;
+
+	if( rank == 0 ) {
+
+		cout << "=== PRUEBA MPI (" << size << " procesos) ===\n";
+        cout << "LCS paralela [" << paralela.size() << "]: " << paralela << "\n";
+        cout << "Tiempo paralelo: " << ( wusedParallel ) << " segundos\n" << endl;
+
+    	cout << "Speedup = serial / paralelo = " << (wusedSerial / wusedParallel) << "x\n";
+	}
+
+	MPI_Finalize();
 }
-
