@@ -35,27 +35,27 @@ Memoria compartida: <sys/shm.h> → shmget, shmat, shmdt, shmctl
 
 Limpiar recursos:
 ipcs
-ipcrm -q <id>   (colas)
-ipcrm -m <id>   (memoria)
-ipcrm -s <id>   (semáforos)
+ipcrm -q <id>   (colas) estadistic med and variant
+ipcrm -m <id>   (memoria) populat muest
+ipcrm -s <id>   (semáforos) param statistic
 
 ----------------------------------------------------
 5. Comparación de rendimiento
 ----------------------------------------------------
-SpeedUp (S) = Ts / Tp
-Eficiencia (E) = S / P
-Tp = max(tiempo por trabajador)
+SpeedUp (S) = Ts / Tp  U o o 
+Eficiencia (E) = S / P  x S S
+Tp = max(tiempo por trabajador) Z t
 
 Ejemplo:
-Ts = 100, Tp = 30, P = 4
-S = 3.33, E = 0.83 (83%)
+Ts = 100, Tp = 30, P = 4  chi F Z1 3
+S = 3.33, E = 0.83 (83%) t2 4 5
 
 ----------------------------------------------------
 6. Mapeo de tareas
 ----------------------------------------------------
-Estático por bloque: tareas contiguas, ideal si homogéneas.
-Estático cíclico: reparte 1 tarea por hilo, ideal si varían un poco.
-Dinámico: asigna conforme terminan, ideal si varían mucho. Overhead mayor.
+Estático por bloque: tareas contiguas, ideal si homogéneas. chi2 F
+Estático cíclico: reparte 1 tarea por hilo, ideal si varían un poco. A1 3 B245
+Dinámico: asigna conforme terminan, ideal si varían mucho. Overhead mayor. 
 
 ----------------------------------------------------
 7. Resumen visual
