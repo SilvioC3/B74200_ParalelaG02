@@ -473,7 +473,7 @@ int main( int cantidad, char ** parametros ) {
    printf( "\nSpeedUp: %.4fx\n", speedUp );
 
 // Con los valores encontrados genera el archivo para visualizar los resultados
-   puntos->genEpsFormat( centrosOMP, clasesOMP, (char *)nombreArchivo );
+   puntosOMP->genEpsFormat( centrosOMP, clasesOMP, (char *)nombreArchivo );
 
    delete[] clases;
    delete[] contClases;
