@@ -35,7 +35,7 @@
 
 
 #define CUDA 256
-#define PUNTOS 100000
+#define PUNTOS 1000000
 #define CLASES 17
 #define MODO 0
 
