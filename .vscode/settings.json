@@ -3,5 +3,6 @@
         "new": "cpp",
         "string": "cpp",
         "format": "cpp"
-    }
+    },
+    "C_Cpp.default.compilerPath": "/usr/bin/gcc"
 }
